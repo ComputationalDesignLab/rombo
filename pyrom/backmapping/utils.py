@@ -16,6 +16,7 @@ Current implementation:
     
     - Linear backmapping
     - Non-linear backmapping via optimization
+    
 """
 
 # Importing relevant libraries
