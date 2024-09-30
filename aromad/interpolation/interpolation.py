@@ -10,10 +10,17 @@ Current Implementation:
 # Importing relevant libraries
 import torch
 import gpytorch
+from botorch.optim.fit import fit_gpytorch_mll_torch
 from abc import ABC, abstractmethod
 
 # Base class definition for low dimensional model
 class MLModel(ABC):
+
+    "Method to set the training data for the model"
+    def _settraindata(self, train_x, train_y):
+
+        self.train_x = self._checkTensor(train_x)
+        self.train_y = self._checkTensor(train_y)
 
     "Method to train the ML model for the low dimensional space"
     @abstractmethod
@@ -51,9 +58,8 @@ class GPRModel(MLModel):
             likelihood = likelihood(num_tasks=train_y.shape[-1])   
         self.model = model(train_x, train_y, likelihood, num_tasks = train_y.shape[-1], kernel = gpytorch.kernels.RBFKernel())
         self.likelihood = likelihood
-        self.train_x = self._checkTensor(train_x)
-        self.train_y = self._checkTensor(train_y)
         self.tkwargs = tkwargs
+        self._settraindata(train_x, train_y)
         
     def train(self, num_epochs, verbose):
             
@@ -101,6 +107,44 @@ class GPRModel(MLModel):
         elif return_format == "numpy":
             return mean.cpu().numpy(), lower.cpu().numpy(), upper.cpu().numpy()
 
+
+# Class definition for a GP model built from BoTorch
+class BoTorchModel(MLModel):
+    
+    def __init__(self, model, mll, train_x, train_y, tkwargs):
+
+        self.model = model
+        self.mll = mll
+        self._settraindata(train_x, train_y)
+        self.tkwargs = tkwargs
+    
+    "Method to train the BoTorch model - this requires significantly less inputs because of preprocessing done by BoTorch"
+    def train(self):
+
+        # Instantiate the model
+        gp = self.model(self.train_x, self.train_y)
+        likelihood = self.mll(gp.likelihood, gp)
+
+        fit_gpytorch_mll_torch(likelihood)
+
+        self.model = gp
+
+    "Method to predict using the BoTorch model"
+    def predict(self, xtest, return_format = 'tensor'):
+
+        # Obtaining the posterior distribution of the model
+        posterior = self.model.posterior
+        # Obtaining mean value predictions
+        predictions = posterior.mean
+        # Obtaining variances
+        variances = posterior.variance
+
+        if return_format == "tensor":
+            return predictions, variances
+        
+        elif return_format == "numpy":
+            return predictions.cpu().numpy(), variances.cpu().numpy()
+
 # Class definition for neural network model
 class NN(MLModel):
 
@@ -108,11 +152,10 @@ class NN(MLModel):
         
         # Initializing model and data        
         self.model = model
-        self.train_x = self._checkTensor(train_x)
-        self.train_y = self._checkTensor(train_y)
+        self._settraindata(train_x, train_y)
         self.tkwargs = tkwargs
             
-    def train(self, num_epochs, verbose):
+    def train(self, epochs, verbose):
 
         if torch.cuda.is_available():
             self.model.cuda()
@@ -136,6 +179,9 @@ class NN(MLModel):
             optimizer.zero_grad()
             loss.backward(retain_graph=True)
             optimizer.step()
+
+            if verbose:
+                print("Epoch:", epoch, "Loss:", loss)
             
             # Storing losses for printing
             losses.append(loss.item())

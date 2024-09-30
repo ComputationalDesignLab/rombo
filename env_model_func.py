@@ -4,12 +4,11 @@ import torch
 import gpytorch
 import math
 from smt.sampling_methods import LHS
-from pyrom.rom.linrom import PODROM
-from pyrom.rom.nonlinrom import AUTOENCROM
+from aromad.rom.linrom import PODROM
+from aromad.rom.nonlinrom import AUTOENCROM
 import numpy as np
-from pyrom.interpolation.interpolation import GPRModel
-from pyrom.interpolation.models import MultitaskGPModel
-from pyrom.dimensionality_reduction.autoencoder import MLPAutoEnc
+from aromad.interpolation.models import MultitaskGPModel
+from aromad.dimensionality_reduction.autoencoder import MLPAutoEnc
 
 tkwargs = {"device": torch.device("cpu") if not torch.cuda.is_available() else torch.device("cuda:0"), "dtype": torch.float}
 
@@ -65,7 +64,7 @@ for b in range(len(xtest)):
 print("Mean Relative Error for Linear ROM:", np.mean(error_1))
 
 # Generating the nonlinear ROM model
-autoencoder = MLPAutoEnc(high_dim=s_size*t_size, hidden_dims=[64,32], zd = 5, activation = torch.nn.SiLU())
+autoencoder = MLPAutoEnc(high_dim=s_size*t_size, hidden_dims=[128,64], zd = 10, activation = torch.nn.SiLU())
 rom = AUTOENCROM(xtrain, htrain, autoencoder = autoencoder, low_dim_model = MultitaskGPModel, low_dim_likelihood = gpytorch.likelihoods.MultitaskGaussianLikelihood)
 rom.trainROM(verbose=False)
 field = rom.predictROM(xtest)

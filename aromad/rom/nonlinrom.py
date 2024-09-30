@@ -1,9 +1,7 @@
 import torch
-import gpytorch
-from ..interpolation.models import MultitaskGPModel, ExactGPModel
 from ..interpolation.interpolation import GPRModel
 from ..dimensionality_reduction.dim_red import AutoencoderReduction
-from abc import ABC, abstractmethod
+from .baserom import ROM
 
 # Setting data type and device for Pytorch based libraries
 tkwargs = {
@@ -11,19 +9,7 @@ tkwargs = {
     "device": torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
 }
 
-class NONLINROM(ABC):
-
-    "Method to fit the ROM to the given data"
-    @abstractmethod
-    def trainROM(self):
-        pass
-
-    "Method to predict using the trained ROM for a given test data"
-    @abstractmethod
-    def predictROM(self):
-        pass
-
-class AUTOENCROM(NONLINROM):
+class AUTOENCROM(ROM):
 
     def __init__(self, param_doe, snapshot_matrix, autoencoder, low_dim_model, low_dim_likelihood, standard = True):
             
@@ -43,21 +29,6 @@ class AUTOENCROM(NONLINROM):
         else:
             self.train_y = self.high_dim_data
         self.dimensionreduction = AutoencoderReduction(self.train_y, autoencoder)
-        
-    "Method to perform standardization of data"
-    def standardize(self, Y):
-    
-        stddim = -1 if Y.dim() < 2 else -2
-        self.Y_std = Y.std(dim=stddim, keepdim=True)
-        self.Y_mean = Y.mean(dim=stddim, keepdim=True)
-        Y_standard = (Y - self.Y_mean) / self.Y_std
-        
-        return Y_standard
-    
-    "Method to unstandardize the data"
-    def unstandardize(self, Y):
-
-        return Y*self.Y_std + self.Y_mean
 
     "Method to fit the ROM to the given data"
     def trainROM(self, verbose):
@@ -88,13 +59,5 @@ class AUTOENCROM(NONLINROM):
             return field
         else:
             return field
-
-    "Method to check whether a given variable is a Tensor or not"
-    def _checkTensor(self, x):
-        
-        if not torch.is_tensor(x):
-            x = torch.tensor(x, **self.tkwargs)
-        
-        return x
 
 
