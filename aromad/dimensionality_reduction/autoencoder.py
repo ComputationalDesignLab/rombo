@@ -6,6 +6,7 @@ Other custom models can be defined but should have a decoder and encoder network
 """
 
 import torch.nn as nn
+import torch
 
 def init_weights(m):
 

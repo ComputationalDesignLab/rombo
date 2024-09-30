@@ -27,9 +27,9 @@ def c_batched(X, Sgrid, Tgrid):
     return torch.stack([env_cfun(*x, Sgrid, Tgrid) for x in X])
 
 # Defining the grid parametes
-s_size = 3
-t_size = 4
-n_data = 50
+s_size = 10
+t_size = 10
+n_data = 100
 
 # Defining spatial and temporal grid
 S = torch.linspace(0.0, 3.0, s_size, **tkwargs)
