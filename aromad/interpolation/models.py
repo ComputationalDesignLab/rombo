@@ -1,11 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Jul 19 12:54:21 2023
-
-@author: Abhijnan
-"""
-
 """
 Pre-built regression/interpolation models built using PyTorch libraries. These can be directly imported
 and used with interpolation models built in the PyROM framework.
@@ -14,11 +6,13 @@ Current Implementation:
     
     - Single Task Exact GP Model
     - Multitask Exact GP Model
+    - Simple neural network model
 
 """
 
 # Importing relevant libraries
 import gpytorch
+import torch.nn as nn
 
 # Class Definition for a MultiTask GP Model 
 class MultitaskGPModel(gpytorch.models.ExactGP):
@@ -69,4 +63,29 @@ class ExactGPModel(gpytorch.models.ExactGP):
         covar_x = self.covar_module(x)
         return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
     
+# Defining of a simple MLP neural network model
+class NNModel(nn.Module):
 
+    """
+    Standard NN model with an MLP architecture
+    
+    """
+
+    def __init__(self, input_dim, hidden_dims, output_dim, activation):
+        super(NNModel, self).__init__()
+        
+        layers = []
+        last_dim = input_dim
+        
+        for dim in hidden_dims:
+            layers.append(nn.Linear(last_dim, dim))
+            layers.append(activation)
+            last_dim = dim
+        
+        layers.append(nn.Linear(last_dim, output_dim))
+        
+        # Combine layers into a Sequential model
+        self.model = nn.Sequential(*layers)
+
+    def forward(self, x):
+        return self.model(x)
