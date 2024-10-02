@@ -29,7 +29,7 @@ def c_batched(X, Sgrid, Tgrid):
 # Defining the grid parametes
 s_size = 10
 t_size = 10
-n_data = 100
+n_data = 200
 
 # Defining spatial and temporal grid
 S = torch.linspace(0.0, 3.0, s_size, **tkwargs)

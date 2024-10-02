@@ -1,5 +1,6 @@
 import torch
 from botorch.acquisition.objective import GenericMCObjective
+from botorch.optim import optimize_acqf
 from abc import ABC, abstractmethod
 
 # Pymoo libraries for acqf optimization
@@ -40,7 +41,7 @@ class ROMBO:
         self.objective = GenericMCObjective(MCObj)
 
     "Method to optimize the acquisition function - standard is to minimize the function"
-    def optimize_acquistion(self, optprob):
+    def optimize_acquistion_pymoo(self, optprob):
 
         "Problem must have the acquistion function as the input"
         problem = optprob(self.acquisition)
@@ -56,6 +57,18 @@ class ROMBO:
         res = minimize(problem, algorithm, termination = termination, verbose=True)
 
         return res.X, res.F
+    
+    "Method to optimize the acquisition function using BoTorch multi-start gradient-based optimization"
+    def optimize_acquistion_torch(self, bounds, tkwargs):
+
+        new_point, new_func = optimize_acqf(
+                acq_function=self.acquisition,
+                bounds=bounds,
+                options={"batch_limit": 5, "maxiter": 200, "init_batch_limit": 5},
+                **tkwargs
+            )
+
+        return new_point, new_func
 
     "Method to run the optimization"
     def optimize(self, optprob):
