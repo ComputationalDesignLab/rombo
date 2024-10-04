@@ -44,7 +44,7 @@ class AUTOENCROM(ROM):
 
         # Training GPR model
         self.gp_model = BoTorchModel(self.low_dim_model, self.low_dim_likelihood, train_x, a.detach(), tkwargs)
-        self.gp_model.train(num_epochs=500, verbose=verbose)
+        self.gp_model.train()
 
     "Method to predict using the trained ROM for a given test data"
     def predictROM(self, test_x):

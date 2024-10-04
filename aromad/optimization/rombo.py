@@ -19,7 +19,7 @@ class ROMBO:
 
     "Class definition for ROMBO - utilizes BoTorch to do the calculations and pymoo to do the maximization"
 
-    def __init__(self, init_x, init_y, num_samples, MCObjective, bounds, acquisition, ROM):
+    def __init__(self, init_x, init_y, num_samples, MCObjective, bounds, acquisition, ROM, ROM_ARGS):
 
         self.xdoe = init_x
         self.ydoe = init_y
@@ -28,6 +28,7 @@ class ROMBO:
         self.acquisition = acquisition
         self.MCObjective = MCObjective
         self.rom = ROM
+        self.args = ROM_ARGS
 
     "Method to set the objective for MC Bayesian optimization"
     def setobjective(self):
@@ -64,19 +65,21 @@ class ROMBO:
 
         for iteration in range(n_iterations):
 
-            print("\n\n##### Running iteration {} out of {} #####".format(iteration+1, self.n_iterations))
+            print("\n\n##### Running iteration {} out of {} #####".format(iteration+1, n_iterations))
 
             best_f = self.MCObjective.utility(self.ydoe).max()
             best_x = self.MCObjective.utility(self.ydoe).argmax()
             print("Best Objective Value:", best_f.item())
             print("Best Design:", self.xdoe[best_x.item()])
 
+            rom_model = self.rom(self.xdoe, self.ydoe, **self.args)
+
             # Training the ROM
-            self.rom.train(verbose=False)
+            rom_model.trainROM(verbose=False)
 
             # Creating the acquisition function
             sampler = SobolQMCNormalSampler(sample_shape = torch.Size([self.num_samples]))
-            acqf = self.setacquisition(self, sampler=sampler, best_f=best_f)
+            acqf = self.setacquisition(sampler=sampler, best_f=best_f)
 
             # Optimizing the acquisition function to obtain a new point
             new_x, _ = self.optimize_acquistion(acqf, self.bounds, tkwargs)

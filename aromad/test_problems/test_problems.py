@@ -1,4 +1,4 @@
-from baseproblem import TestFunction
+from .baseproblem import TestFunction
 import torch
 import numpy as np
 import math
@@ -82,7 +82,7 @@ class EnvModelFunction(TestFunction):
 
         # Evaluating the utility
         sq_diffs = (y - self.c_true).pow(2)
-        return sq_diffs.sum(dim=(-1, -2))
+        return sq_diffs.sum(dim=(-1, -2)).mul(-1.0)
     
 class BrusselatorPDE(TestFunction):
 
