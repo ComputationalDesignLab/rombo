@@ -31,7 +31,7 @@ class AUTOENCROM(ROM):
         self.dimensionreduction = AutoencoderReduction(self.train_y, autoencoder)
 
     "Method to fit the ROM to the given data"
-    def trainROM(self, verbose):
+    def trainROM(self, verbose, type = 'mll'):
 
         # Setting training data
         train_x = self.param_doe
@@ -44,7 +44,7 @@ class AUTOENCROM(ROM):
 
         # Training GPR model
         self.gp_model = BoTorchModel(self.low_dim_model, self.low_dim_likelihood, train_x, a.detach(), tkwargs)
-        self.gp_model.train()
+        self.gp_model.train(type)
 
     "Method to predict using the trained ROM for a given test data"
     def predictROM(self, test_x):

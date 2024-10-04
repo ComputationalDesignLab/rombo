@@ -6,9 +6,11 @@ from pde import PDE, FieldCollection, ScalarField, UnitGrid
 
 class EnvModelFunction(TestFunction):
 
-    def __init__(self, input_dim, output_dim):
+    def __init__(self, input_dim, output_dim, normalized = False):
 
         "Constructor for the class inspired by JoCo and BoTorch codes"
+
+        self.normalized = normalized
 
         if input_dim is None:
             self.input_dim = 15
@@ -66,11 +68,20 @@ class EnvModelFunction(TestFunction):
     
     def function(self, x):
 
-        return self.env_cfun(self.Sgrid, self.Tgrid, *x)
+        if self.normalized:
+            xnew = x[0:4].clone()
+            for i in range(4):
+                xnew[i] = (
+                    xnew[i] * (self.upper_bounds[i] - self.lower_bounds[i])
+                ) + self.lower_bounds[i]
+        else:
+            xnew = x
+            
+        return self.env_cfun(self.Sgrid, self.Tgrid, *xnew)
     
     def evaluate(self, X):
 
-        return torch.stack([self.env_cfun(self.Sgrid, self.Tgrid, *x) for x in X])
+        return torch.stack([self.function(x) for x in X])
 
     def utility(self, y):
 

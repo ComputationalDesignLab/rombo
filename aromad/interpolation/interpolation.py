@@ -11,6 +11,7 @@ Current Implementation:
 import torch
 import gpytorch
 from botorch.optim.fit import fit_gpytorch_mll_torch
+from botorch.fit import fit_fully_bayesian_model_nuts
 from abc import ABC, abstractmethod
 
 # Base class definition for low dimensional model
@@ -119,15 +120,33 @@ class BoTorchModel(MLModel):
         self.tkwargs = tkwargs
     
     "Method to train the BoTorch model - this requires significantly less inputs because of preprocessing done by BoTorch"
-    def train(self):
+    def train(self, type = 'mll'):
 
         # Instantiate the model
         gp = self.model(self.train_x, self.train_y)
-        likelihood = self.mll(gp.likelihood, gp)
 
+        # Train model
+        if type == 'mll':
+            gp = self.fit_mll(gp)
+        elif type == 'bayesian':
+            gp = self.fit_bayesian(gp)
+        
+        self.model = gp
+
+    "Method to train using maximum likelihood estimation"
+    def fit_mll(self, gp):
+
+        likelihood = self.mll(gp.likelihood, gp)
         fit_gpytorch_mll_torch(likelihood)
 
-        self.model = gp
+        return gp
+
+    "Method to use fully Bayesian training and No U-Turn sampling"
+    def fit_bayesian(self, gp, WARMUP_STEPS, NUM_SAMPLES):
+
+        fit_fully_bayesian_model_nuts(gp, warmup_steps=WARMUP_STEPS, num_samples=NUM_SAMPLES)
+
+        return gp
 
     "Method to predict using the BoTorch model"
     def predict(self, xtest, return_format = 'tensor'):

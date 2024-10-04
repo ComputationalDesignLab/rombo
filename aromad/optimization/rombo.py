@@ -58,6 +58,34 @@ class ROMBO:
         acqf = self.acquisition(model = rom.gp_model.model, best_f=best_f, sampler=sampler, objective=self.objective)
 
         return acqf
+    
+    "Method to perform only one iteration for running parallel cases with multiple optimizers and multiple settings"
+    def do_one_step(self, tag, tkwargs):
+
+        best_f = self.MCObjective.utility(self.ydoe).max()
+        best_x = self.MCObjective.utility(self.ydoe).argmax()
+        print("\nBest Objective Value for {}:".format(tag), best_f.item())
+        print("Best Design for {}:".format(tag), self.xdoe[best_x.item()])
+
+        rom_model = self.rom(self.xdoe, self.ydoe, **self.args)
+
+        # Training the ROM
+        rom_model.trainROM(verbose=False)
+        self.setobjective(rom_model)
+
+        # Creating the acquisition function
+        sampler = SobolQMCNormalSampler(sample_shape = torch.Size([self.num_samples]))
+        acqf = self.setacquisition(rom = rom_model, sampler=sampler, best_f=best_f)
+
+        # Optimizing the acquisition function to obtain a new point
+        new_x, _ = self.optimize_acquistion_torch(acqf, self.bounds, tkwargs)
+
+        # Add in new data to the existing dataset 
+        for x in new_x:
+            self.xdoe = torch.cat((self.xdoe, x.unsqueeze(0)), dim = 0)
+            new_y = self.MCObjective.function(x)
+            new_y = new_y.reshape((1, self.ydoe.shape[-1]))
+            self.ydoe = torch.cat((self.ydoe, new_y), dim = 0)
 
     "Method to run the optimization"
     def optimize(self, n_iterations, tkwargs):
