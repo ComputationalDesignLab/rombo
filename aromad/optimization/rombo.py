@@ -31,12 +31,11 @@ class ROMBO:
         self.args = ROM_ARGS
 
     "Method to set the objective for MC Bayesian optimization"
-    def setobjective(self):
+    def setobjective(self, rom_model):
 
         def function(samples, X=None):
 
-            samples = self.rom.dimensionreduction.backmapping(samples)
-            
+            samples = rom_model.dimensionreduction.backmapping(samples)
             return self.MCObjective.utility(samples)
 
         self.objective = GenericMCObjective(function)
@@ -54,9 +53,9 @@ class ROMBO:
         return new_point, new_func
     
     "Method to set the acquisition function for the optimization problem"
-    def setacquisition(self, sampler, best_f):
+    def setacquisition(self, rom, sampler, best_f):
 
-        acqf = self.acquisition(model = self.rom.gp_model, best_f=best_f, sampler=sampler, objective=self.objective)
+        acqf = self.acquisition(model = rom.gp_model.model, best_f=best_f, sampler=sampler, objective=self.objective)
 
         return acqf
 
@@ -76,19 +75,21 @@ class ROMBO:
 
             # Training the ROM
             rom_model.trainROM(verbose=False)
+            self.setobjective(rom_model)
 
             # Creating the acquisition function
             sampler = SobolQMCNormalSampler(sample_shape = torch.Size([self.num_samples]))
-            acqf = self.setacquisition(sampler=sampler, best_f=best_f)
+            acqf = self.setacquisition(rom = rom_model, sampler=sampler, best_f=best_f)
 
             # Optimizing the acquisition function to obtain a new point
-            new_x, _ = self.optimize_acquistion(acqf, self.bounds, tkwargs)
+            new_x, _ = self.optimize_acquistion_torch(acqf, self.bounds, tkwargs)
 
             # Add in new data to the existing dataset 
-            self.xdoe = torch.cat((self.xdoe, new_x), dim = 0)
-            new_y = self.MCObjective.function(new_x)
-            new_y = new_y.reshape((1, self.ydoe.shape[-1]))
-            self.ydoe = torch.cat((self.ydoe, new_y), dim = 0)
+            for x in new_x:
+                self.xdoe = torch.cat((self.xdoe, x.unsqueeze(0)), dim = 0)
+                new_y = self.MCObjective.function(x)
+                new_y = new_y.reshape((1, self.ydoe.shape[-1]))
+                self.ydoe = torch.cat((self.ydoe, new_y), dim = 0)
 
 
 

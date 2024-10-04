@@ -33,10 +33,11 @@ ydoe = ydoe.reshape((ydoe.shape[0], objective.output_dim))
 
 # Definition the rom model
 autoencoder = MLPAutoEnc(high_dim=ydoe.shape[-1], hidden_dims=[128,64], zd = 10, activation = torch.nn.SiLU())
-rom_args = {"autoencoder": autoencoder, "low_dim_model": KroneckerMultiTaskGP, "low_dim_likelihood": ExactMarginalLogLikelihood}
+rom_args = {"autoencoder": autoencoder, "low_dim_model": KroneckerMultiTaskGP, "low_dim_likelihood": ExactMarginalLogLikelihood,
+            "standard": False}
 
 optimizer = ROMBO(init_x=xdoe, init_y=ydoe, num_samples=32, bounds = bounds, MCObjective=objective, acquisition=qLogExpectedImprovement, ROM=AUTOENCROM, ROM_ARGS=rom_args)
 
-optim_args = {"q": 1, "num_restarts": 10, "raw_samples": 512}
-optimizer.optimize(n_iterations=2, tkwargs=optim_args)
+optim_args = {"q": 2, "num_restarts": 10, "raw_samples": 512}
+optimizer.optimize(n_iterations=20, tkwargs=optim_args)
 
