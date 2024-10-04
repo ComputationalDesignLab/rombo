@@ -1,5 +1,5 @@
 import torch
-from ..interpolation.interpolation import GPRModel
+from ..interpolation.interpolation import GPRModel, BoTorchModel
 from ..dimensionality_reduction.dim_red import AutoencoderReduction
 from .baserom import ROM
 
@@ -43,7 +43,7 @@ class AUTOENCROM(ROM):
         a = self.dimensionreduction.encoding()
 
         # Training GPR model
-        self.gp_model = GPRModel(self.low_dim_model, self.low_dim_likelihood, train_x, a.detach(), tkwargs)
+        self.gp_model = BoTorchModel(self.low_dim_model, self.low_dim_likelihood, train_x, a.detach(), tkwargs)
         self.gp_model.train(num_epochs=500, verbose=verbose)
 
     "Method to predict using the trained ROM for a given test data"

@@ -133,7 +133,7 @@ class BoTorchModel(MLModel):
     def predict(self, xtest, return_format = 'tensor'):
 
         # Obtaining the posterior distribution of the model
-        posterior = self.model.posterior
+        posterior = self.model.posterior(xtest)
         # Obtaining mean value predictions
         predictions = posterior.mean
         # Obtaining variances

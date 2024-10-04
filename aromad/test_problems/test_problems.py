@@ -1,6 +1,8 @@
 from baseproblem import TestFunction
 import torch
+import numpy as np
 import math
+from pde import PDE, FieldCollection, ScalarField, UnitGrid
 
 class EnvModelFunction(TestFunction):
 
@@ -84,7 +86,67 @@ class EnvModelFunction(TestFunction):
     
 class BrusselatorPDE(TestFunction):
 
-    pass
+    def __init__(self, Nx, Ny, input_dim):
+
+        # Setting the paramters for the grid of the PDE
+        self.Nx = Nx
+        self.Ny = Ny
+
+        self.lower_bounds = [0.1, 0.1, 0.1, 0.01]
+        self.upper_bounds = [5.0, 5.0, 5.0, 5.0]
+
+        self.input_dim = input_dim
+        self.output_dim = 2*self.Nx*self.Ny
+
+    def function(self, x):
+
+        a = x[0]
+        b = x[1]
+        d0 = x[2]
+        d1 = x[3]
+
+        eq = PDE(
+            {
+                "u": f"{d0} * laplace(u) + {a} - ({b} + 1) * u + u**2 * v",
+                "v": f"{d1} * laplace(v) + {b} * u - u**2 * v",
+            }
+        )
+
+        # initialize state
+        grid = UnitGrid([self.Nx, self.Ny])
+        u = ScalarField(grid, a, label="Field $u$")
+        v = b / a + 0.1 * ScalarField.random_normal(grid, label="Field $v$")
+        state = FieldCollection([u, v])
+
+        sol = eq.solve(state, t_range=20, dt=1e-3)
+        
+        sol_tensor = []
+        sol_tensor.append(sol[0].data)
+        sol_tensor.append(sol[1].data)
+        sol_tensor = np.array(sol_tensor)
+        
+        ss = sol_tensor[np.isnan(sol_tensor)]
+        sol_tensor[np.isnan(sol_tensor)] = 1e5 * np.random.randn(*ss.shape)
+        
+        return sol_tensor
+    
+    def evaluate(self, x):
+
+        # Implement batch evaluation function
+        pass
+
+    def utility(self, y):
+
+        y = y.reshape((2,self.Nx,self.Ny))
+        weighting = np.ones((2,self.Nx,self.Ny))/10
+        weighting[:, [0, 1, -2, -1], :] = 1.0
+        weighting[:, :, [0, 1, -2, -1]] = 1.0
+        weighted_samples = weighting * y
+        return np.var(weighted_samples)
+
+    
+
+
 
 
 
