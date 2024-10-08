@@ -112,18 +112,18 @@ class GPRModel(MLModel):
 # Class definition for a GP model built from BoTorch
 class BoTorchModel(MLModel):
     
-    def __init__(self, model, mll, train_x, train_y, tkwargs):
+    def __init__(self, model, mll, train_x, train_y, model_args = {}):
 
         self.model = model
         self.mll = mll
         self._settraindata(train_x, train_y)
-        self.tkwargs = tkwargs
+        self.model_args = model_args
     
     "Method to train the BoTorch model - this requires significantly less inputs because of preprocessing done by BoTorch"
     def train(self, type = 'mll'):
 
         # Instantiate the model
-        gp = self.model(self.train_x, self.train_y)
+        gp = self.model(self.train_x, self.train_y, **self.model_args)
 
         # Train model
         if type == 'mll':
@@ -142,7 +142,7 @@ class BoTorchModel(MLModel):
         return gp
 
     "Method to use fully Bayesian training and No U-Turn sampling"
-    def fit_bayesian(self, gp, WARMUP_STEPS, NUM_SAMPLES):
+    def fit_bayesian(self, gp, WARMUP_STEPS=256, NUM_SAMPLES=128):
 
         fit_fully_bayesian_model_nuts(gp, warmup_steps=WARMUP_STEPS, num_samples=NUM_SAMPLES)
 

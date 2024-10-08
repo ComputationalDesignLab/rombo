@@ -2,13 +2,12 @@ from .baseproblem import TestFunction
 import torch
 import numpy as np
 import math
+import matplotlib.pyplot as plt 
 from pde import PDE, FieldCollection, ScalarField, UnitGrid
 
 class EnvModelFunction(TestFunction):
 
     def __init__(self, input_dim, output_dim, normalized = False):
-
-        "Constructor for the class inspired by JoCo and BoTorch codes"
 
         self.normalized = normalized
 
@@ -80,7 +79,6 @@ class EnvModelFunction(TestFunction):
         return self.env_cfun(self.Sgrid, self.Tgrid, *xnew)
     
     def evaluate(self, X):
-
         return torch.stack([self.function(x) for x in X])
 
     def utility(self, y):
@@ -94,11 +92,46 @@ class EnvModelFunction(TestFunction):
         # Evaluating the utility
         sq_diffs = (y - self.c_true).pow(2)
         return sq_diffs.sum(dim=(-1, -2)).mul(-1.0)
-    
+
+    "Method to plot the contours of the function along with the target contours"
+    def optresult_plotter(self, x_list, color_list, label_list, plot_target = True):
+
+        fig, ax = plt.subplots(dpi=2**8)
+        for i in range(len(x_list)):
+            ax.contour(self.Sgrid.detach().cpu().numpy(), self.Tgrid.detach().cpu().numpy(), self.function(x_list[i]).detach().cpu().numpy(), colors = color_list[i], 
+                    label = label_list[i], levels = 30)
+        
+        if plot_target:
+            ax.contour(self.Sgrid.detach().cpu().numpy(), self.Tgrid.detach().cpu().numpy(), self.c_true.detach().cpu().numpy(), colors = 'purple', 
+                    label = 'Target', levels = 30)
+
+        ax.legend()
+        ax.set_xlabel('s')
+        ax.set_ylabel('t')
+        plt.show()
+
+    "Method to plot predicted and true contours given a list of models"
+    def prediction_plotter(self, x, model_list, color_list, label_list, plot_true = True):
+        print(x)
+        fig, ax = plt.subplots(dpi=2**8)
+        for i in range(len(model_list)):
+            ax.contour(self.Sgrid.detach().cpu().numpy(), self.Tgrid.detach().cpu().numpy(), model_list[i].predictROM(x)[0].reshape((self.s_size, self.t_size)).detach().cpu().numpy(), 
+                        colors = color_list[i], label = label_list[i], levels = 15)
+
+        if plot_true:
+            ax.contour(self.Sgrid.detach().cpu().numpy(), self.Tgrid.detach().cpu().numpy(), self.function(x[0]).detach().cpu().numpy(), colors = 'purple', 
+                    label = 'Exact', levels = 15)
+
+        ax.legend()
+        ax.set_xlabel('s')
+        ax.set_ylabel('t')
+        plt.show()
+
 class BrusselatorPDE(TestFunction):
 
-    def __init__(self, Nx, Ny, input_dim):
+    def __init__(self, Nx, Ny, input_dim, tkwargs, normalized = True):
 
+        self.normalized = normalized
         # Setting the paramters for the grid of the PDE
         self.Nx = Nx
         self.Ny = Ny
@@ -109,12 +142,26 @@ class BrusselatorPDE(TestFunction):
         self.input_dim = input_dim
         self.output_dim = 2*self.Nx*self.Ny
 
+        self.tkwargs = tkwargs
+
     def function(self, x):
 
-        a = x[0]
-        b = x[1]
-        d0 = x[2]
-        d1 = x[3]
+        if torch.is_tensor(x):
+            x = x.detach().cpu().numpy()
+
+        if self.normalized:
+            xnew = x[0:4].copy()
+            for i in range(4):
+                xnew[i] = (
+                    xnew[i] * (self.upper_bounds[i] - self.lower_bounds[i])
+                ) + self.lower_bounds[i]
+        else:
+            xnew = x
+
+        a = xnew[0]
+        b = xnew[1]
+        d0 = xnew[2]
+        d1 = xnew[3]
 
         eq = PDE(
             {
@@ -139,21 +186,31 @@ class BrusselatorPDE(TestFunction):
         ss = sol_tensor[np.isnan(sol_tensor)]
         sol_tensor[np.isnan(sol_tensor)] = 1e5 * np.random.randn(*ss.shape)
         
-        return sol_tensor
+        return torch.tensor(sol_tensor, **self.tkwargs)
     
-    def evaluate(self, x):
+    def evaluate(self, X):
+        return torch.stack([self.function(x) for x in X])
 
-        # Implement batch evaluation function
-        pass
-
-    def utility(self, y):
-
-        y = y.reshape((2,self.Nx,self.Ny))
-        weighting = np.ones((2,self.Nx,self.Ny))/10
+    def score(self, y):
+        weighting = torch.ones((2,self.Nx,self.Ny))/10
         weighting[:, [0, 1, -2, -1], :] = 1.0
         weighting[:, :, [0, 1, -2, -1]] = 1.0
         weighted_samples = weighting * y
-        return np.var(weighted_samples)
+        return -weighted_samples.var(dim=(-1, -2, -3))
+
+    def utility(self, Y):
+        
+        # Resizing the inputs
+        if Y.shape[-1] == (self.output_dim):
+            Y = Y.unsqueeze(-1).unsqueeze(-1).reshape(
+                *Y.shape[:-1], 2, self.Nx, self.Ny
+            )
+
+        if Y.dim() == 3:
+            Y = Y.unsqueeze(0).reshape(1, 2, self.Nx, self.Ny)
+        
+        return torch.stack([self.score(y) for y in Y])
+
 
     
 

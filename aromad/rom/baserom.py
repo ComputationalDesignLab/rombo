@@ -6,6 +6,12 @@
 from abc import ABC, abstractmethod
 import torch
 
+# Setting data type and device for Pytorch based libraries
+tkwargs = {
+    "dtype": torch.float,
+    "device": torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
+}
+
 class ROM(ABC):
 
     "Method to perform standardization of data"
@@ -27,7 +33,7 @@ class ROM(ABC):
     def _checkTensor(self, x):
         
         if not torch.is_tensor(x):
-            x = torch.tensor(x, **self.tkwargs)
+            x = torch.tensor(x, **tkwargs)
         
         return x
 
