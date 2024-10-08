@@ -32,10 +32,10 @@ class ROMBO(BaseBO):
     "Method to perform only one iteration for running parallel cases with multiple optimizers and multiple settings"
     def do_one_step(self, tag, tkwargs):
 
-        self.best_f = self.MCObjective.utility(self.ydoe).max()
-        self.best_x = self.MCObjective.utility(self.ydoe).argmax()
-        print("\nBest Objective Value for {}:".format(tag), self.best_f.item())
-        print("Best Design for {}:".format(tag), self.xdoe[self.best_x.item()])
+        self.best_f = self.MCObjective.utility(self.ydoe).max().item()
+        self.best_x = self.MCObjective.utility(self.ydoe).argmax().item()
+        print("\nBest Objective Value for {}:".format(tag), self.best_f)
+        print("Best Design for {}:".format(tag), self.xdoe[self.best_x])
 
         rom_model = self.rom(self.xdoe, self.ydoe, **self.args)
 

@@ -24,62 +24,70 @@ tkwargs = {"device": torch.device("cpu") if not torch.cuda.is_available() else t
 # Creating the initial design of experiments
 #xlimits = np.array([[7.0, 13.0], [0.02, 0.12], [0.01, 3.0], [30.010, 30.295]])
 xlimits = np.array([[0.0, 1.0]]*15)
-sampler = LHS(xlimits=xlimits, criterion="ese")
 n_init = 10
 objective = EnvModelFunction(input_dim=15, output_dim=256, normalized=True)
 #bounds = torch.tensor([[7.0, 0.02, 0.01, 30.010], [13.0, 0.12, 3.00, 30.295]], **tkwargs)
 bounds = torch.cat((torch.zeros(1, 15), torch.ones(1, 15))).to(**tkwargs)
+n_trials = 2
+n_iterations = 2
 
-xdoe = sampler(n_init)
-xdoe = torch.tensor(xdoe, **tkwargs)
-ydoe = objective.evaluate(xdoe)
-ydoe = ydoe.reshape((ydoe.shape[0], objective.output_dim))
-n_iterations = 10
+boei_objectives = np.zeros((n_trials, n_iterations))
+bologei_objectives = np.zeros((n_trials, n_iterations))
+romboei_objectives = np.zeros((n_trials, n_iterations))
+rombologei_objectives = np.zeros((n_trials, n_iterations))
 
-# Calculating initial scores for standard BO procedure
-score_doe = objective.utility(ydoe).unsqueeze(-1)
+boei_dvs = np.zeros((n_trials, n_iterations, 15))
+bologei_dvs = np.zeros((n_trials, n_iterations))
+romboei_dvs = np.zeros((n_trials, n_iterations, 15))
+rombologei_dvs = np.zeros((n_trials, n_iterations, 15))
 
-# Definition the rombo models
-autoencoder = MLPAutoEnc(high_dim=ydoe.shape[-1], hidden_dims=[128,64], zd = 10, activation = torch.nn.SiLU())
-rom_args = {"autoencoder": autoencoder, "low_dim_model": KroneckerMultiTaskGP, "low_dim_likelihood": ExactMarginalLogLikelihood,
-            "standard": False}
-optim_args = {"q": 3, "num_restarts": 10, "raw_samples": 512}
-optimizer1 = ROMBO(init_x=xdoe, init_y=ydoe, num_samples=32, bounds = bounds, MCObjective=objective, acquisition=qLogExpectedImprovement, ROM=AUTOENCROM, ROM_ARGS=rom_args)
-optimizer2 = ROMBO(init_x=xdoe, init_y=ydoe, num_samples=32, bounds = bounds, MCObjective=objective, acquisition=qExpectedImprovement, ROM=AUTOENCROM, ROM_ARGS=rom_args)
-optimizer3 = BO(init_x=xdoe, init_y=score_doe, num_samples=32, bounds = bounds, MCObjective=objective, acquisition=qExpectedImprovement, GP=SingleTaskGP, 
-                MLL=ExactMarginalLogLikelihood)
+for trial in range(n_trials):
 
-stdbo_objectives = []
-romboei_objectives = []
-rombologei_objectives = []
+    print("\n\n##### Running trial {} out of {} #####".format(trial+1, n_trials))
 
-stdbo_dvs = []
-romboei_dvs = []
-rombologei_dvs = []
+    sampler = LHS(xlimits=xlimits, criterion="ese")
+    xdoe = sampler(n_init)
+    xdoe = torch.tensor(xdoe, **tkwargs)
+    ydoe = objective.evaluate(xdoe)
+    ydoe = ydoe.reshape((ydoe.shape[0], objective.output_dim))
 
-for iteration in range(n_iterations):
+    # Calculating initial scores for standard BO procedure
+    score_doe = objective.utility(ydoe).unsqueeze(-1)
 
-    print("\n\n##### Running iteration {} out of {} #####".format(iteration+1, n_iterations))
+    # Definition the rombo models
+    autoencoder = MLPAutoEnc(high_dim=ydoe.shape[-1], hidden_dims=[128,64], zd = 10, activation = torch.nn.SiLU())
+    rom_args = {"autoencoder": autoencoder, "low_dim_model": KroneckerMultiTaskGP, "low_dim_likelihood": ExactMarginalLogLikelihood,
+                "standard": False}
+    optim_args = {"q": 1, "num_restarts": 10, "raw_samples": 512}
+    optimizer1 = ROMBO(init_x=xdoe, init_y=ydoe, num_samples=32, bounds = bounds, MCObjective=objective, acquisition=qLogExpectedImprovement, ROM=AUTOENCROM, ROM_ARGS=rom_args)
+    optimizer2 = ROMBO(init_x=xdoe, init_y=ydoe, num_samples=32, bounds = bounds, MCObjective=objective, acquisition=qExpectedImprovement, ROM=AUTOENCROM, ROM_ARGS=rom_args)
+    optimizer3 = BO(init_x=xdoe, init_y=score_doe, num_samples=32, bounds = bounds, MCObjective=objective, acquisition=qExpectedImprovement, GP=SingleTaskGP, 
+                    MLL=ExactMarginalLogLikelihood)
+    optimizer4 = BO(init_x=xdoe, init_y=score_doe, num_samples=32, bounds = bounds, MCObjective=objective, acquisition=qLogExpectedImprovement, GP=SingleTaskGP, 
+                    MLL=ExactMarginalLogLikelihood)
 
-    optimizer1.do_one_step(tag = 'ROMBO + Log EI', tkwargs=optim_args)
-    optimizer2.do_one_step(tag = 'ROMBO + EI', tkwargs=optim_args)
-    optimizer3.do_one_step(tag = 'BO + EI', tkwargs=optim_args)
+    for iteration in range(n_iterations):
 
-    stdbo_objectives.append(optimizer3.best_f)
-    stdbo_dvs.append(optimizer3.best_x)
+        print("\n\n##### Running iteration {} out of {} #####".format(iteration+1, n_iterations))
 
-    romboei_objectives.append(optimizer2.best_f)
-    romboei_dvs.append(optimizer2.best_x)
+        optimizer1.do_one_step(tag = 'ROMBO + Log EI', tkwargs=optim_args)
+        optimizer2.do_one_step(tag = 'ROMBO + EI', tkwargs=optim_args)
+        optimizer3.do_one_step(tag = 'BO + EI', tkwargs=optim_args)
+        optimizer4.do_one_step(tag = 'BO + Log EI', tkwargs=optim_args)
 
-    rombologei_objectives.append(optimizer1.best_f)
-    rombologei_dvs.append(optimizer1.best_x)
+        boei_objectives[trial][iteration] = optimizer3.best_f
+        boei_dvs[trial][iteration] = optimizer3.best_x
 
-results = {"BO": {"objectives": stdbo_objectives, "design": stdbo_dvs}, "ROMBO_EI": {"objectives": romboei_objectives, "design": romboei_dvs},
-            "ROMBO_LOGEI": {"objectives": rombologei_objectives, "design": rombologei_dvs}}
-savemat("env_model_results_256_q3.mat", results)
+        bologei_objectives[trial][iteration] = optimizer4.best_f
+        bologei_dvs[trial][iteration] = optimizer4.best_x
 
+        romboei_objectives[trial][iteration] = optimizer2.best_f
+        romboei_dvs[trial][iteration] = optimizer2.best_x
 
+        rombologei_objectives[trial][iteration] = optimizer1.best_f
+        rombologei_dvs[trial][iteration] = optimizer1.best_x
 
-
-
+results = {"BO_EI": {"objectives": boei_objectives, "design": boei_dvs, "xdoe": optimizer3.xdoe, "ydoe": optimizer3.ydoe}, "BO_LOGEI": {"objectives": bologei_objectives, "design": bologei_dvs, "xdoe": optimizer4.xdoe, "ydoe": optimizer4.ydoe}, 
+           "ROMBO_EI": {"objectives": romboei_objectives, "design": romboei_dvs, "xdoe": optimizer2.xdoe, "ydoe": optimizer2.ydoe}, "ROMBO_LOGEI": {"objectives": rombologei_objectives, "design": rombologei_dvs, "xdoe": optimizer1.xdoe, "ydoe": optimizer1.ydoe}}
+savemat("env_model_results_256_multiples_trials.mat", results)
 

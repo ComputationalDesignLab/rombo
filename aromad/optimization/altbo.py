@@ -23,10 +23,10 @@ class BO(BaseBO):
 
     def do_one_step(self, tag, tkwargs):
 
-        self.best_f = self.ydoe.max()
-        self.best_x = self.ydoe.argmax()
-        print("\nBest Objective Value for {}:".format(tag), self.best_f.item())
-        print("Best Design for {}:".format(tag), self.xdoe[self.best_x.item()])
+        self.best_f = self.ydoe.max().item()
+        self.best_x = self.ydoe.argmax().item()
+        print("\nBest Objective Value for {}:".format(tag), self.best_f)
+        print("Best Design for {}:".format(tag), self.xdoe[self.best_x])
         
         # Training the GP model
         gp_model = BoTorchModel(self.gp, self.mll, self.xdoe, self.ydoe, model_args=self.gp_args)
