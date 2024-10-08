@@ -58,36 +58,12 @@ class ROMBO(BaseBO):
             self.ydoe = torch.cat((self.ydoe, new_y), dim = 0)
 
     "Method to run the optimization"
-    def optimize(self, n_iterations, tkwargs):
+    def optimize(self, tag, n_iterations, tkwargs):
 
         for iteration in range(n_iterations):
 
             print("\n\n##### Running iteration {} out of {} #####".format(iteration+1, n_iterations))
-
-            best_f = self.MCObjective.utility(self.ydoe).max()
-            best_x = self.MCObjective.utility(self.ydoe).argmax()
-            print("Best Objective Value:", best_f.item())
-            print("Best Design:", self.xdoe[best_x.item()])
-
-            rom_model = self.rom(self.xdoe, self.ydoe, **self.args)
-
-            # Training the ROM
-            rom_model.trainROM(verbose=False)
-            self.setobjective(rom_model)
-
-            # Creating the acquisition function
-            sampler = SobolQMCNormalSampler(sample_shape = torch.Size([self.num_samples]))
-            acqf = self.setacquisition(rom = rom_model.gp_model.model, sampler=sampler, best_f=best_f)
-
-            # Optimizing the acquisition function to obtain a new point
-            new_x, _ = self.optimize_acquistion_torch(acqf, self.bounds, tkwargs)
-
-            # Add in new data to the existing dataset 
-            for x in new_x:
-                self.xdoe = torch.cat((self.xdoe, x.unsqueeze(0)), dim = 0)
-                new_y = self.MCObjective.function(x)
-                new_y = new_y.reshape((1, self.ydoe.shape[-1]))
-                self.ydoe = torch.cat((self.ydoe, new_y), dim = 0)
+            self.do_one_step(tag, tkwargs)
 
 
 
