@@ -97,15 +97,20 @@ class EnvModelFunction(TestFunction):
     def optresult_plotter(self, x_list, color_list, label_list, plot_target = True):
 
         fig, ax = plt.subplots(dpi=2**8)
+        h_list = []
         for i in range(len(x_list)):
-            ax.contour(self.Sgrid.detach().cpu().numpy(), self.Tgrid.detach().cpu().numpy(), self.function(x_list[i]).detach().cpu().numpy(), colors = color_list[i], 
+            c = ax.contour(self.Sgrid.detach().cpu().numpy(), self.Tgrid.detach().cpu().numpy(), self.function(x_list[i]).detach().cpu().numpy(), colors = color_list[i], 
                     label = label_list[i], levels = 15)
+            h, _ = c.legend_elements()
+            h_list.append(h[0])
         
         if plot_target:
-            ax.contour(self.Sgrid.detach().cpu().numpy(), self.Tgrid.detach().cpu().numpy(), self.c_true.detach().cpu().numpy(), colors = 'k', 
+            c_target = ax.contour(self.Sgrid.detach().cpu().numpy(), self.Tgrid.detach().cpu().numpy(), self.c_true.detach().cpu().numpy(), colors = 'k', 
                     label = 'Target', levels = 15)
-
-        ax.legend()
+            h_target, _ = c_target.legend_elements()
+            h_list.append(h_target[0])
+        label_list.append('Target')
+        ax.legend(h_list, label_list)
         ax.set_xlabel('s')
         ax.set_ylabel('t')
         plt.show()
@@ -114,15 +119,20 @@ class EnvModelFunction(TestFunction):
     def prediction_plotter(self, x, model_list, color_list, label_list, plot_true = True):
         print(x)
         fig, ax = plt.subplots(dpi=2**8)
+        h_list = []
         for i in range(len(model_list)):
-            ax.contour(self.Sgrid.detach().cpu().numpy(), self.Tgrid.detach().cpu().numpy(), model_list[i].predictROM(x)[0].reshape((self.s_size, self.t_size)).detach().cpu().numpy(), 
+            c = ax.contour(self.Sgrid.detach().cpu().numpy(), self.Tgrid.detach().cpu().numpy(), model_list[i].predictROM(x)[0].reshape((self.s_size, self.t_size)).detach().cpu().numpy(), 
                         colors = color_list[i], label = label_list[i], levels = 15)
+            h, _ = c.legend_elements()
+            h_list.append(h[0])
 
         if plot_true:
-            ax.contour(self.Sgrid.detach().cpu().numpy(), self.Tgrid.detach().cpu().numpy(), self.function(x[0]).detach().cpu().numpy(), colors = 'purple', 
+            c_exact = ax.contour(self.Sgrid.detach().cpu().numpy(), self.Tgrid.detach().cpu().numpy(), self.function(x[0]).detach().cpu().numpy(), colors = 'purple', 
                     label = 'Exact', levels = 15)
-
-        ax.legend()
+            h_exact, _ = c_exact.legend_elements()
+            h_list.append(h_exact[0])
+        label_list.append('Exact')
+        plt.legend(h_list, label_list)
         ax.set_xlabel('s')
         ax.set_ylabel('t')
         plt.show()
@@ -211,8 +221,27 @@ class BrusselatorPDE(TestFunction):
         
         return torch.stack([self.score(y) for y in Y])
 
+    "Method to plot predicted and true contours given a list of models"
+    def prediction_plotter(self, x, model_list, color_list, label_list, plot_true = True):
 
-    
+        fig, ax = plt.subplots(dpi=2**8)
+        h_list = []
+        for i in range(len(model_list)):
+            c = ax.contour(self.Sgrid.detach().cpu().numpy(), self.Tgrid.detach().cpu().numpy(), model_list[i].predictROM(x)[0].reshape((self.s_size, self.t_size)).detach().cpu().numpy(), 
+                        colors = color_list[i], label = label_list[i], levels = 15)
+            h, _ = c.legend_elements()
+            h_list.append(h[0])
+
+        if plot_true:
+            c_exact = ax.contour(self.Sgrid.detach().cpu().numpy(), self.Tgrid.detach().cpu().numpy(), self.function(x[0]).detach().cpu().numpy(), colors = 'purple', 
+                    label = 'Exact', levels = 15)
+            h_exact, _ = c_exact.legend_elements()
+            h_list.append(h_exact[0])
+        label_list.append('Exact')
+        plt.legend(h_list, label_list)
+        ax.set_xlabel('s')
+        ax.set_ylabel('t')
+        plt.show()
 
 
 
