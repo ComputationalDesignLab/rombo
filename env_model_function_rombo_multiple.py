@@ -25,21 +25,21 @@ tkwargs = {"device": torch.device("cpu") if not torch.cuda.is_available() else t
 #xlimits = np.array([[7.0, 13.0], [0.02, 0.12], [0.01, 3.0], [30.010, 30.295]])
 xlimits = np.array([[0.0, 1.0]]*15)
 n_init = 10
-objective = EnvModelFunction(input_dim=15, output_dim=256, normalized=True)
+objective = EnvModelFunction(input_dim=15, output_dim=64, normalized=True)
 #bounds = torch.tensor([[7.0, 0.02, 0.01, 30.010], [13.0, 0.12, 3.00, 30.295]], **tkwargs)
 bounds = torch.cat((torch.zeros(1, 15), torch.ones(1, 15))).to(**tkwargs)
-n_trials = 2
-n_iterations = 2
+n_trials = 1
+n_iterations = 30
 
 boei_objectives = np.zeros((n_trials, n_iterations))
 bologei_objectives = np.zeros((n_trials, n_iterations))
 romboei_objectives = np.zeros((n_trials, n_iterations))
 rombologei_objectives = np.zeros((n_trials, n_iterations))
 
-boei_dvs = np.zeros((n_trials, n_iterations, 15))
+boei_dvs = np.zeros((n_trials, n_iterations))
 bologei_dvs = np.zeros((n_trials, n_iterations))
-romboei_dvs = np.zeros((n_trials, n_iterations, 15))
-rombologei_dvs = np.zeros((n_trials, n_iterations, 15))
+romboei_dvs = np.zeros((n_trials, n_iterations))
+rombologei_dvs = np.zeros((n_trials, n_iterations))
 
 for trial in range(n_trials):
 
@@ -89,5 +89,5 @@ for trial in range(n_trials):
 
 results = {"BO_EI": {"objectives": boei_objectives, "design": boei_dvs, "xdoe": optimizer3.xdoe, "ydoe": optimizer3.ydoe}, "BO_LOGEI": {"objectives": bologei_objectives, "design": bologei_dvs, "xdoe": optimizer4.xdoe, "ydoe": optimizer4.ydoe}, 
            "ROMBO_EI": {"objectives": romboei_objectives, "design": romboei_dvs, "xdoe": optimizer2.xdoe, "ydoe": optimizer2.ydoe}, "ROMBO_LOGEI": {"objectives": rombologei_objectives, "design": rombologei_dvs, "xdoe": optimizer1.xdoe, "ydoe": optimizer1.ydoe}}
-savemat("env_model_results_256_multiples_trials.mat", results)
+savemat("env_model_results_64_v1.mat", results)
 

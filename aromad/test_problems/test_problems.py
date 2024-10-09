@@ -99,11 +99,11 @@ class EnvModelFunction(TestFunction):
         fig, ax = plt.subplots(dpi=2**8)
         for i in range(len(x_list)):
             ax.contour(self.Sgrid.detach().cpu().numpy(), self.Tgrid.detach().cpu().numpy(), self.function(x_list[i]).detach().cpu().numpy(), colors = color_list[i], 
-                    label = label_list[i], levels = 30)
+                    label = label_list[i], levels = 15)
         
         if plot_target:
-            ax.contour(self.Sgrid.detach().cpu().numpy(), self.Tgrid.detach().cpu().numpy(), self.c_true.detach().cpu().numpy(), colors = 'purple', 
-                    label = 'Target', levels = 30)
+            ax.contour(self.Sgrid.detach().cpu().numpy(), self.Tgrid.detach().cpu().numpy(), self.c_true.detach().cpu().numpy(), colors = 'k', 
+                    label = 'Target', levels = 15)
 
         ax.legend()
         ax.set_xlabel('s')
