@@ -99,14 +99,12 @@ class EnvModelFunction(TestFunction):
         fig, ax = plt.subplots(dpi=2**8)
         h_list = []
         for i in range(len(x_list)):
-            c = ax.contour(self.Sgrid.detach().cpu().numpy(), self.Tgrid.detach().cpu().numpy(), self.function(x_list[i]).detach().cpu().numpy(), colors = color_list[i], 
-                    label = label_list[i], levels = 15)
+            c = ax.contour(self.Sgrid.detach().cpu().numpy(), self.Tgrid.detach().cpu().numpy(), self.function(x_list[i]).detach().cpu().numpy(), colors = color_list[i], levels = 15)
             h, _ = c.legend_elements()
             h_list.append(h[0])
         
         if plot_target:
-            c_target = ax.contour(self.Sgrid.detach().cpu().numpy(), self.Tgrid.detach().cpu().numpy(), self.c_true.detach().cpu().numpy(), colors = 'k', 
-                    label = 'Target', levels = 15)
+            c_target = ax.contour(self.Sgrid.detach().cpu().numpy(), self.Tgrid.detach().cpu().numpy(), self.c_true.detach().cpu().numpy(), colors = 'k', levels = 15)
             h_target, _ = c_target.legend_elements()
             h_list.append(h_target[0])
         label_list.append('Target')
@@ -121,14 +119,12 @@ class EnvModelFunction(TestFunction):
         fig, ax = plt.subplots(dpi=2**8)
         h_list = []
         for i in range(len(model_list)):
-            c = ax.contour(self.Sgrid.detach().cpu().numpy(), self.Tgrid.detach().cpu().numpy(), model_list[i].predictROM(x)[0].reshape((self.s_size, self.t_size)).detach().cpu().numpy(), 
-                        colors = color_list[i], label = label_list[i], levels = 15)
+            c = ax.contour(self.Sgrid.detach().cpu().numpy(), self.Tgrid.detach().cpu().numpy(), model_list[i].predictROM(x)[0].reshape((self.s_size, self.t_size)).detach().cpu().numpy(), colors = color_list[i], levels = 15)
             h, _ = c.legend_elements()
             h_list.append(h[0])
 
         if plot_true:
-            c_exact = ax.contour(self.Sgrid.detach().cpu().numpy(), self.Tgrid.detach().cpu().numpy(), self.function(x[0]).detach().cpu().numpy(), colors = 'purple', 
-                    label = 'Exact', levels = 15)
+            c_exact = ax.contour(self.Sgrid.detach().cpu().numpy(), self.Tgrid.detach().cpu().numpy(), self.function(x[0]).detach().cpu().numpy(), colors = 'purple', levels = 15)
             h_exact, _ = c_exact.legend_elements()
             h_list.append(h_exact[0])
         label_list.append('Exact')
@@ -222,21 +218,26 @@ class BrusselatorPDE(TestFunction):
         return torch.stack([self.score(y) for y in Y])
 
     "Method to plot predicted and true contours given a list of models"
-    def prediction_plotter(self, x, model_list, color_list, label_list, plot_true = True):
+    def prediction_plotter(self, x, model_list, color_list, label_list, index = 1, plot_true = True):
+
+        X = np.linspace(0,63,64)
+        Y = np.linspace(0,63,64)
+        xplot, yplot = np.meshgrid(X, Y, indexing='ij')
 
         fig, ax = plt.subplots(dpi=2**8)
         h_list = []
         for i in range(len(model_list)):
-            c = ax.contour(self.Sgrid.detach().cpu().numpy(), self.Tgrid.detach().cpu().numpy(), model_list[i].predictROM(x)[0].reshape((self.s_size, self.t_size)).detach().cpu().numpy(), 
-                        colors = color_list[i], label = label_list[i], levels = 15)
+            prediction = model_list[i].predictROM(x)[0].reshape((2, self.Nx, self.Ny)).detach().cpu().numpy()
+            c = ax.contourf(xplot, yplot, prediction[index,:,:], levels = 15)
             h, _ = c.legend_elements()
             h_list.append(h[0])
 
         if plot_true:
-            c_exact = ax.contour(self.Sgrid.detach().cpu().numpy(), self.Tgrid.detach().cpu().numpy(), self.function(x[0]).detach().cpu().numpy(), colors = 'purple', 
-                    label = 'Exact', levels = 15)
+            exact = self.function(x[0]).detach().cpu().numpy()
+            c_exact = ax.contour(xplot, yplot, exact[index,:,:], colors = 'k', levels = 15)
             h_exact, _ = c_exact.legend_elements()
             h_list.append(h_exact[0])
+
         label_list.append('Exact')
         plt.legend(h_list, label_list)
         ax.set_xlabel('s')

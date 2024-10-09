@@ -39,7 +39,6 @@ plt.tight_layout()
 plt.show()
 
 # Plotting the contours of the function
-print(bo_data['design'][0][0][0][-1][0])
 x_list = [bo_data['design'][0][0][0][-1][0], bologei_data['design'][0][0][0][-1], romboei_data['design'][0][0][0][-1][0], rombologei_data['design'][0][0][0][-1][0]]
 x_list = [bo_data["xdoe"][0][0][int(x_list[0])], bologei_data["xdoe"][0][0][int(x_list[1])], romboei_data["xdoe"][0][0][int(x_list[2])], rombologei_data["xdoe"][0][0][int(x_list[3])]]
 x_list = torch.tensor(x_list, **tkwargs)
