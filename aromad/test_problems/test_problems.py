@@ -1,6 +1,8 @@
 from .baseproblem import TestFunction
+import os
 import torch
 import numpy as np
+from scipy.io import loadmat
 import math
 import matplotlib.pyplot as plt 
 from pde import PDE, FieldCollection, ScalarField, UnitGrid
@@ -248,6 +250,57 @@ class BrusselatorPDE(TestFunction):
         ax.set_ylabel('t')
         plt.show()
 
+class Airfoil(TestFunction):
+
+    "Class definition for airfoil optimization test problem - assumes that data is generated using blackbox"
+
+    def __init__(self, directory, airfoil, airfoil_x, upper_bounds, lower_bounds, normalized = False):
+
+        # Load data from the directory while initiliazing the class
+        fieldfile = os.path.join(directory, 'fieldData.mat')
+        coefffile = os.path.join(directory, 'data.mat')
+        field_data = loadmat(fieldfile)
+        coeff_data = loadmat(coefffile)
+        self.xdoe = field_data['x']
+        self.coefpressure = field_data['CoefPressure']
+        self.coefdrag = coeff_data['cd']
+
+        # Setting the ydoe to be concatenated pressure and total drag
+        self.ydoe = np.hstack([self.coefdrag, self.coefpressure])
+
+        # Setting the x coordinates for the airfoil
+        self.airfoil_x = airfoil_x
+
+        # Setting blackbox airfoil class
+        self.airfoil = airfoil
+
+        # Setting the upper and lower bounds
+        self.lowerbounds = lower_bounds
+        self.upperbounds = upper_bounds
+
+    def function(self, x):
+
+        if self.normalized:
+            xnew = x.clone()
+            for i in range(xnew.shape[-1]):
+                xnew[i] = (
+                    xnew[i] * (self.upper_bounds[i] - self.lower_bounds[i])
+                ) + self.lower_bounds[i]
+        else:
+            xnew = x
+
+        xnew = xnew.detach().cpu().numpy()
+        output, fieldData = self.airfoil.getObjectives(x)
+            
+        return output, fieldData
+    
+    def integration(self, y):
+        pass
+
+    def utility(self, y):
+        pass
+
+    
 
 
 
