@@ -1,6 +1,3 @@
-import torch
-from botorch.acquisition.objective import GenericMCObjective
-from botorch.sampling import SobolQMCNormalSampler
 from botorch.optim import optimize_acqf
 from abc import ABC, abstractmethod
 
