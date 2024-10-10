@@ -326,7 +326,7 @@ class Airfoil(TestFunction):
     "Method to calculate the area constraint for the airfoil problem"
     def area_constraint(self, x):
 
-        area = self.airfoil.calculateArea(x)
+        area = self.airfoil.calculateArea(x.detach().cpu().numpy())
         return 1 - area/self.base_area
 
     "Method to caclulate the thickness constraint for the airfoil problem"
@@ -337,8 +337,8 @@ class Airfoil(TestFunction):
 
         t_airfoil = self.base_thickness*(u_airfoil - l_airfoil)
 
-        x_upper = x[1:7]
-        x_lower = x[7:]
+        x_upper = x.detach().cpu().numpy()[1:7]
+        x_lower = x.detach().cpu().numpy()[7:]
 
         u_x = self.airfoil.DVGeo.computeCSTCoordinates(np.array([self.airfoil_x]), 0.5, 1.0, x_upper, 0.0)
         l_x = self.airfoil.DVGeo.computeCSTCoordinates(np.array([self.airfoil_x]), 0.5, 1.0, x_lower, 0.0)

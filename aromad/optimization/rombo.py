@@ -67,7 +67,6 @@ class ROMBO(BaseBO):
             print("\n\n##### Running iteration {} out of {} #####".format(iteration+1, n_iterations))
             self.do_one_step(tag, tkwargs)
 
-
 class ConstrainedROMBO(BaseBO):
 
     "Class definition for ROMBO - utilizes BoTorch to do the calculations and maximization of the acquisition function"
@@ -103,6 +102,7 @@ class ConstrainedROMBO(BaseBO):
                 bounds=bounds,
                 options={"batch_limit": 5, "maxiter": 200, "init_batch_limit": 5},
                 batch_initial_conditions=start_points,
+                nonlinear_inequality_constraints=self.constraints,
                 **self.optim_args
             )
 
