@@ -10,7 +10,7 @@ tkwargs = {"device": torch.device("cpu") if not torch.cuda.is_available() else t
 problem = BrusselatorPDE(input_dim=4, Nx=64, Ny=64, tkwargs=tkwargs)
 
 # Generating the design of experiments
-n_data = 20
+n_data = 50
 xlimits = np.array([[0.0,1.0]]*32)
 sampler = LHS(xlimits=xlimits, criterion="ese")
 xtrain = sampler(n_data)
@@ -18,4 +18,4 @@ ytrain = problem.evaluate(xtrain)
 
 # Saving the samples generated
 samples = {"x": torch.tensor(xtrain, **tkwargs), "y": ytrain}
-savemat("bruss_init.mat", samples)
+savemat("bruss_data_50.mat", samples)

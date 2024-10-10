@@ -32,7 +32,7 @@ ax.semilogy(iter, -bologei_data['objectives'][0][0][0], 'mo-', label = 'BO+Log E
 ax.semilogy(iter, -romboei_data['objectives'][0][0][0], 'ro-', label = 'ROMBO+EI')
 ax.semilogy(iter, -rombologei_data['objectives'][0][0][0], 'go-', label = 'ROMBO+Log EI')
 ax.grid()
-ax.legend()
+ax.legend(loc = 'upper right')
 ax.set_xlabel('Number of Samples')
 ax.set_ylabel('Best Objective Function Value, $y^*$')
 plt.tight_layout()

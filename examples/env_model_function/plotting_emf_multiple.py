@@ -43,7 +43,7 @@ for data in data_list:
     lower_objectives = mean_objectives - objectives_std
     upper_objectives = mean_objectives + objectives_std
     
-    lower_objectives[lower_objectives < 1e-3] = 1e-2
+    lower_objectives[lower_objectives < 1e-3] = 1e-1
     
     plt.semilogy(iter, mean_objectives, color_list[i], label = labels[i])
     plt.fill_between(iter, lower_objectives, upper_objectives, color = fill_color[i], alpha=0.3, zorder=100)
