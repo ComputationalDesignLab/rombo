@@ -254,7 +254,8 @@ class Airfoil(TestFunction):
 
     "Class definition for airfoil optimization test problem - assumes that data is generated using blackbox"
 
-    def __init__(self, directory, airfoil, airfoil_x, upper_bounds, lower_bounds, normalized = False):
+    def __init__(self, directory, airfoil, airfoil_x, upper_bounds, lower_bounds, targetCL, base_area, base_thickness, baseline_upper, baseline_lower,
+                 tkwargs, normalized = False):
 
         # Load data from the directory while initiliazing the class
         fieldfile = os.path.join(directory, 'fieldData.mat')
@@ -264,6 +265,13 @@ class Airfoil(TestFunction):
         self.xdoe = field_data['x']
         self.coefpressure = field_data['CoefPressure']
         self.coefdrag = coeff_data['cd']
+        self.tkwargs = tkwargs
+        self.baseline_upper = baseline_upper
+        self.baseline_lower = baseline_lower
+        self.base_thickness = base_thickness
+        self.targetCL = targetCL
+        self.base_area = base_area
+        self.normalized = normalized
 
         # Setting the ydoe to be concatenated pressure and total drag
         self.ydoe = np.hstack([self.coefdrag, self.coefpressure])
@@ -284,8 +292,8 @@ class Airfoil(TestFunction):
             xnew = x.clone()
             for i in range(xnew.shape[-1]):
                 xnew[i] = (
-                    xnew[i] * (self.upper_bounds[i] - self.lower_bounds[i])
-                ) + self.lower_bounds[i]
+                    xnew[i] * (self.upperbounds[i] - self.lowerbounds[i])
+                ) + self.lowerbounds[i]
         else:
             xnew = x
 
@@ -294,11 +302,63 @@ class Airfoil(TestFunction):
             
         return output, fieldData
     
+    "Method for computing y/c given x/c and shape parameters"
+    def compute_yc(self, x):
+
+        # Extracting CST coeffs from DV vector
+        x_upper = x[1:7]
+        x_lower = x[7:]
+
+        # Splitting x coordinate values
+        x_c_u = self.airfoil_x[0:250]
+        x_c_l = self.airfoil_x[250:500]
+
+        airfoil_upper = self.airfoil.DVGeo.computeCSTCoordinates(x_c_u, 0.5, 1.0, x_upper, 0.0)
+        airfoil_lower = self.airfoil.DVGeo.computeCSTCoordinates(x_c_l, 0.5, 1.0, x_lower, 0.0)
+        
+        airfoil_upper = np.nan_to_num(airfoil_upper)
+        airfoil_lower = np.nan_to_num(airfoil_lower)
+
+        y_c = np.concatenate((airfoil_upper, airfoil_lower))
+
+        return y_c
+    
+    "Method to calculate the area constraint for the airfoil problem"
+    def area_constraint(self, x):
+
+        area = self.airfoil.calculateArea(x)
+        return 1 - area/self.base_area
+
+    "Method to caclulate the thickness constraint for the airfoil problem"
+    def thickness_constraint(self, x):
+
+        u_airfoil = self.airfoil.DVGeo.computeCSTCoordinates(np.array([self.airfoil_x]), 0.5, 1.0, self.baseline_upper, 0.0)
+        l_airfoil = self.airfoil.DVGeo.computeCSTCoordinates(np.array([self.airfoil_x]), 0.5, 1.0, self.baseline_lower, 0.0)
+
+        t_airfoil = self.base_thickness*(u_airfoil - l_airfoil)
+
+        x_upper = x[1:7]
+        x_lower = x[7:]
+
+        u_x = self.airfoil.DVGeo.computeCSTCoordinates(np.array([self.airfoil_x]), 0.5, 1.0, x_upper, 0.0)
+        l_x = self.airfoil.DVGeo.computeCSTCoordinates(np.array([self.airfoil_x]), 0.5, 1.0, x_lower, 0.0)
+
+        t_x = u_x - l_x
+
+        return 1 - t_x/t_airfoil
+
+    "Method for integrating the pressure distribution to obtain the lift"
     def integration(self, y):
-        pass
+        
+        # Defining tensors for calculating gradients
+        pressure = y[0:]
+        cn = torch.trapezoid(pressure, torch.tensor(self.airfoil_x, **self.tkwargs)) # Normal force component
+        return cn
 
     def utility(self, y):
-        pass
+        
+        # Returning the first element of the array since that is the drag output
+        return y[:, 0]
 
     
 

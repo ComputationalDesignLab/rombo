@@ -66,7 +66,23 @@ class ROMBO(BaseBO):
             self.do_one_step(tag, tkwargs)
 
 
+class ConstrainedROMBO(BaseBO):
 
+    "Class definition for ROMBO - utilizes BoTorch to do the calculations and maximization of the acquisition function"
+
+    def __init__(self, init_x, init_y, num_samples, MCObjective, bounds, acquisition, constraints, ROM, ROM_ARGS):
+
+        self.xdoe = init_x
+        self.ydoe = init_y
+        self.bounds = bounds
+        self.num_samples = num_samples
+        self.acquisition = acquisition
+        self.MCObjective = MCObjective
+        self.rom = ROM
+        self.args = ROM_ARGS
+        self.constraints = constraints
+
+    "Method to generate initial conditions based on acquisition function"
 
         
 
