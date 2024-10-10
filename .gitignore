@@ -1,0 +1,7 @@
+aromad.egg-info/
+aromad/dimensionality_reduction/__pycache__
+aromad/interpolation/__pycache__
+aromad/optimization/__pycache__
+aromad/rom/__pycache__
+aromad/test_problems/__pycache__
+build/
