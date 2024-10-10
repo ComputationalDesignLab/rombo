@@ -1,4 +1,5 @@
 aromad.egg-info/
+aromad/__pycache__
 aromad/dimensionality_reduction/__pycache__
 aromad/interpolation/__pycache__
 aromad/optimization/__pycache__

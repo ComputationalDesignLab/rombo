@@ -12,6 +12,8 @@ from gpytorch.mlls import ExactMarginalLogLikelihood
 from aromad.interpolation.models import MultitaskGPModel
 from aromad.dimensionality_reduction.autoencoder import MLPAutoEnc
 from aromad.test_problems.test_problems import EnvModelFunction
+import warnings
+warnings.filterwarnings('ignore')
 
 tkwargs = {"device": torch.device("cpu") if not torch.cuda.is_available() else torch.device("cuda:0"), "dtype": torch.float}
 
@@ -62,6 +64,6 @@ print("Mean Relative Error for Nonlinear ROM:", np.mean(error_1))
 # Creating a plot of the true and predicted contours
 x_plot = xtest[20].unsqueeze(0)
 model_list = [rom, linrom]
-color_list = ['k', 'r']
+color_list = ['r', 'b']
 label_list = ['Autoencoder ROM', 'POD ROM']
-problem.prediction_plotter(x_plot, model_list, color_list, label_list)
+problem.prediction_plotter(x_plot, model_list, color_list, label_list, save_filename='prediction.pdf')

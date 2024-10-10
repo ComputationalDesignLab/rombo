@@ -117,7 +117,7 @@ class EnvModelFunction(TestFunction):
         plt.show()
 
     "Method to plot predicted and true contours given a list of models"
-    def prediction_plotter(self, x, model_list, color_list, label_list, plot_true = True):
+    def prediction_plotter(self, x, model_list, color_list, label_list, save_filename, plot_true = True):
 
         fig, ax = plt.subplots(dpi=2**8)
         h_list = []
@@ -134,7 +134,7 @@ class EnvModelFunction(TestFunction):
         plt.legend(h_list, label_list, ncol = 2)
         ax.set_xlabel('s')
         ax.set_ylabel('t')
-        plt.savefig('rom_prediction.pdf')
+        plt.savefig(save_filename)
         plt.show()
 
 class BrusselatorPDE(TestFunction):
