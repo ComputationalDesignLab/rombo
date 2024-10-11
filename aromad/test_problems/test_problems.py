@@ -328,8 +328,8 @@ class Airfoil(TestFunction):
     "Method to calculate the area constraint for the airfoil problem"
     def area_constraint(self, x):
 
-        area = self.airfoil.calculateArea(x.detach().cpu().numpy())
-        return (area/self.base_area) - 1
+        area = self.airfoil.calculateArea(x)
+        return 1 - (area/self.base_area)
 
     "Method to caclulate the thickness constraint for the airfoil problem"
     def thickness_constraint(self, x):

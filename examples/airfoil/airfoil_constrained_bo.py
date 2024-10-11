@@ -123,6 +123,7 @@ airfoil.addDV("alpha", lowerBound=1.5, upperBound=3.5)
 # Defining bounds of the sampling problem
 lowerBounds = np.array([1.5])
 upperBounds = np.array([3.5])
+bounds = [(1.5, 3.5)]
 keys = ["upper", "lower"]
 for key in keys:
     coeff = airfoil.DVGeo.defaultDV[key] # get the fitted CST coeff
@@ -138,17 +139,18 @@ for key in keys:
         ub = max([dv_min[i],dv_max[i]])
         lowerBounds = np.append(lowerBounds, lb)
         upperBounds = np.append(upperBounds, ub)
+        bounds.append((lb,ub))
 
 # Defining the problem
 problem = Airfoil(directory="./init_samples", airfoil=airfoil, airfoil_x=x_c, upper_bounds=upperBounds, lower_bounds=lowerBounds, targetCL=CL_target, 
                   base_area=base_area, base_thickness = 0.0, baseline_upper=airfoil.DVGeo.defaultDV['upper'], baseline_lower=airfoil.DVGeo.defaultDV['lower'], 
                   tkwargs=tkwargs, normalized = False)
 
-bounds = torch.tensor([lowerBounds,upperBounds], **tkwargs)
+cand_bounds = torch.tensor([lowerBounds, upperBounds], **tkwargs)
 
-optim_args = {"q": 1, "num_restarts": 20, "raw_samples": 512}
+optim_args = {"q": 1, "num_restarts": 50, "raw_samples": 512}
 optimizer = AirfoilBO(obj_x=problem.xdoe, obj_y=problem.coefdrag, cons_x = [problem.xdoe,problem.xdoe], cons_y = [problem.coeflift, problem.area],
                       num_samples=32, bounds = bounds, MCObjective=problem, acquisition=qExpectedImprovement, GP=SingleTaskGP, MLL=ExactMarginalLogLikelihood,
                       optim_args=optim_args)
 
-optimizer.do_one_step(tag='BO+EI', tkwargs = optim_args)
+optimizer.do_one_step(tag='BO+EI', cand_bounds = cand_bounds)

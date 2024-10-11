@@ -6,3 +6,5 @@ aromad/optimization/__pycache__
 aromad/rom/__pycache__
 aromad/test_problems/__pycache__
 build/
+examples/airfoil/init_samples/
+examples/airfoil/infill_samples/
