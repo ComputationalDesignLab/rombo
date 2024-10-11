@@ -146,7 +146,7 @@ problem = Airfoil(directory="./init_samples", airfoil=airfoil, airfoil_x=x_c, up
 
 bounds = torch.tensor([lowerBounds,upperBounds], **tkwargs)
 
-optim_args = {"q": 1, "num_restarts": 10, "raw_samples": 512}
+optim_args = {"q": 1, "num_restarts": 20, "raw_samples": 512}
 optimizer = AirfoilBO(obj_x=problem.xdoe, obj_y=problem.coefdrag, cons_x = [problem.xdoe,problem.xdoe], cons_y = [problem.coeflift, problem.area],
                       num_samples=32, bounds = bounds, MCObjective=problem, acquisition=qExpectedImprovement, GP=SingleTaskGP, MLL=ExactMarginalLogLikelihood,
                       optim_args=optim_args)
