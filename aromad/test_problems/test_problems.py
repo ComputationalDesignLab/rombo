@@ -265,6 +265,8 @@ class Airfoil(TestFunction):
         self.xdoe = field_data['x']
         self.coefpressure = field_data['CoefPressure']
         self.coefdrag = coeff_data['cd']
+        self.coeflift = coeff_data['cl']
+        self.area = coeff_data['area']
         self.tkwargs = tkwargs
         self.baseline_upper = baseline_upper
         self.baseline_lower = baseline_lower
@@ -327,7 +329,7 @@ class Airfoil(TestFunction):
     def area_constraint(self, x):
 
         area = self.airfoil.calculateArea(x.detach().cpu().numpy())
-        return 1 - area/self.base_area
+        return (area/self.base_area) - 1
 
     "Method to caclulate the thickness constraint for the airfoil problem"
     def thickness_constraint(self, x):
@@ -346,6 +348,9 @@ class Airfoil(TestFunction):
         t_x = u_x - l_x
 
         return 1 - t_x/t_airfoil
+    
+    def evaluate(self,x):
+        pass
 
     "Method for integrating the pressure distribution to obtain the lift"
     def integration(self, y):

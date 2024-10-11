@@ -14,6 +14,9 @@ from botorch.optim.fit import fit_gpytorch_mll_torch
 from botorch.fit import fit_fully_bayesian_model_nuts
 from abc import ABC, abstractmethod
 
+# Arguments for GPU-related calculations
+tkwargs = {"device": torch.device("cpu"), "dtype": torch.float}
+
 # Base class definition for low dimensional model
 class MLModel(ABC):
 
@@ -37,7 +40,7 @@ class MLModel(ABC):
     def _checkTensor(self, x):
         
         if not torch.is_tensor(x):
-            x = torch.tensor(x, **self.tkwargs)
+            x = torch.tensor(x, **tkwargs)
         
         return x
 
