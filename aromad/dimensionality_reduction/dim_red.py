@@ -88,6 +88,8 @@ class AutoencoderReduction(DimensionalityReduction):
          self._setsnapshots(S)
          # Setting the neural network model used for dimensionality reduction
          self.model = nn_model
+         if torch.cuda.is_available():
+            self.model.cuda()
 
     "Method to fit the PyTorch neural network model"
     def fit(self, epochs):
