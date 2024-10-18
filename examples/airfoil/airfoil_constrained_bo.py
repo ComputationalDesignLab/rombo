@@ -5,6 +5,7 @@ from aromad.test_problems.test_problems import Airfoil
 from aromad.optimization.altbo import AirfoilBO
 from prefoil.utils import readCoordFile
 from scipy.io import savemat, loadmat
+from scipy.optimize._numdiff import approx_derivative
 import warnings
 warnings.filterwarnings('ignore')
 

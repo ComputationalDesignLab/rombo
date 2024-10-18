@@ -185,9 +185,7 @@ class NN(MLModel):
         # Training neural network model
         loss_function = torch.nn.MSELoss()
 
-        optimizer = torch.optim.Adam(self.model.parameters(),
-                                    lr = 1e-3,
-                                    weight_decay = 1e-8)
+        optimizer = torch.optim.Adam(self.model.parameters(), lr = 1e-3, weight_decay = 1e-8)
         epochs = epochs
         losses = []
         for epoch in range(epochs):

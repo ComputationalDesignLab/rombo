@@ -63,15 +63,19 @@ class BO(BaseBO):
             print("\n\n##### Running iteration {} out of {} #####".format(iteration+1, n_iterations))
             self.do_one_step(tag, tkwargs)
 
-class AirfoilBO(BaseBO):
+class ConstrainedBO(BaseBO):
 
-    "Class definition for constrained BO with one unknown constraint and one known constraint"
-    def __init__(self, obj_x, obj_y, cons_x, cons_y, num_samples, MCObjective, bounds, acquisition, GP, MLL, GP_ARGS = {}, optim_args = {}, training = 'mll'):
+    "Class definition for constrained BO with known and unknown constraints"
+    def __init__(self, obj_x, obj_y, cons_x, cons_y, cons_limit, n_unknown_cons, cons_known, num_samples, MCObjective, bounds, acquisition, 
+                 GP, MLL, GP_ARGS = {}, optim_args = {}, training = 'mll'):
 
         self.xdoe = obj_x
         self.ydoe = obj_y
         self.xcons = cons_x
         self.ycons = cons_y
+        self.constraint_limits = cons_limit
+        self.n_unknown_cons = n_unknown_cons
+        self.cons_known = cons_known
         self.bounds = bounds
         self.num_samples = num_samples
         self.acquisition = acquisition
@@ -81,92 +85,71 @@ class AirfoilBO(BaseBO):
         self.training = training
         self.gp_args = GP_ARGS
         self.optim_args = optim_args
-
-    "Method to generate initial conditions based on acquisition function"
-    def gen_init_conditions(self, acqf, bounds):
-
-        start_points = gen_batch_initial_conditions(acqf, bounds, q = self.optim_args['q'], num_restarts = self.optim_args['num_restarts'],
-                                                    raw_samples = self.optim_args['raw_samples'])
-        start_points = start_points.reshape((self.optim_args['num_restarts'],13)) 
-
-        # Only returning points where constraints are not violated
-        cl_cons, _ = self.cons_model.predict(start_points)
-        area_cons = np.vstack([self.MCObjective.area_constraint(x.detach().cpu().numpy()) for x in start_points])
-        area_cons = torch.tensor(area_cons, **tkwargs)
-        idx = (cl_cons >= self.MCObjective.targetCL) & (area_cons >= 0)
-
-        start_points = start_points[idx.reshape(1,-1)[0], :]
-
-        return start_points.reshape((start_points.shape[0], 1, 13))
     
     "Definition of objective function for SLSQP"
     def objective_func(self, x):
 
         # Reshaping DVs and converting to tensor
-        x_reshape = x.reshape((1, x.shape[0]))
-        x_tensor = torch.tensor(x_reshape, **tkwargs)
+        x_tensor = torch.tensor(x, **tkwargs)
 
         # Evaluating acquisition function value
         acqf_value = self.acqf(x_tensor)
 
-        return -acqf_value.detach().cpu().numpy()
-    
-    "Method to optimize the acquisition function using BoTorch multi-start gradient-based optimization"
-    def constrained_optimize_acquistion(self, acqf, bounds, start_points):
-
-        result_x = np.array([])
-        result_f = np.array([])
-        constraints = [NonlinearConstraint(self.lift_cons, -np.inf, 0), NonlinearConstraint(self.area_cons, -np.inf, 0)]
-        method = "SLSQP"
-        jac = "3-point"
-        for start in start_points:
-            x0 = start[0].detach().cpu().numpy()
-            result = minimize(fun=self.objective_func, x0=x0, method=method, jac=jac, constraints=constraints, bounds=bounds)
-
-            result_x = np.append(result_x, result.x)
-            result_f = np.append(result_f, result.f)
-
-        return result_f.max(), result_x[result_f.argmax()]
+        return -acqf_value.item()
 
     "Method to clamp current doe to the feasible set"
     def clamp_to_feasible(self):
 
-        idx = (self.ycons[0] >= self.MCObjective.targetCL) & (self.ycons[1] >= self.MCObjective.base_area)
-        return -self.ydoe[idx], self.xdoe[idx.reshape(1,-1)[0], :]
+        ydoe_prime = self.ydoe.clone()
+        xdoe_prime = self.xdoe.clone()
+
+        for i in range(len(self.constraint_limits)):
+
+            idx = (self.ycons[i] >= self.constraint_limits[i])
+            ydoe_prime = ydoe_prime[idx]
+            xdoe_prime = xdoe_prime[idx.reshape(1,-1)[0], :]
+
+        return -ydoe_prime[idx], xdoe_prime[idx.reshape(1,-1)[0], :]
     
-    "Defining a function for constraints"
-    def lift_cons(self, x):
-        x_reshape = x.reshape((1, x.shape[0]))
-        x_tensor = torch.tensor(x_reshape, **tkwargs)
-        cl, _ = self.cons_model.predict(x_tensor)
-        return 1 - (cl.detach().cpu().numpy()/self.MCObjective.targetCL)
+    "Method to generate and train a GP model for constraints or objectives"
+    def _train_model(self, xdata, ydata):
+
+        gp_model = BoTorchModel(self.gp, self.mll, xdata, ydata, model_args=self.gp_args)
+        gp_model.train(type=self.training)
+
+        return gp_model
     
-    def area_cons(self, x):
-        area_cons = self.MCObjective.area_constraint(x)
-        return area_cons
+    "Method to generate a function for each of the constraints"
+    def _generate_constraint(self, cons_model):
+
+        cons_fun = lambda x: cons_model.predict(torch.tensor(x.reshape((1,x.shape[0])), **tkwargs))
+        return cons_fun
 
     def do_one_step(self, tag, cand_bounds):
 
         f_clamped, x_clamped = self.clamp_to_feasible()
         self.best_f = f_clamped.max().item()
-        self.best_x = f_clamped.argmax().item()
+        self.best_x = x_clamped[f_clamped.argmax().item()]
         print("\nBest Objective Value for {}:".format(tag), self.best_f)
-        print("Best Design for {}:".format(tag), x_clamped[self.best_x])
+        print("Best Design for {}:".format(tag), self.best_x)
         
-        # Training the GP modelsss
-        obj_model = BoTorchModel(self.gp, self.mll, self.xdoe, -self.ydoe, model_args=self.gp_args)
-        obj_model.train(type=self.training)
-
-        self.cons_model = BoTorchModel(self.gp, self.mll, self.xcons[0], self.ycons[0], model_args=self.gp_args)
-        self.cons_model.train(type=self.training)
+        # Training the GP models for objective function
+        obj_model = self._train_model(self.xdoe, -self.ydoe)
+        
+        # Training the GP models fo necessary constraints - the unknown constraints are specified first in the list
+        cons_model_list = []
+        cons_func_list = []
+        for i in range(self.n_unknown_cons):
+            cons_model = self._train_model(self.xcons[i], self.ycons[i])
+            cons_model_list.append(cons_model)
+            cons_func_list.append(self._generate_constraint(cons_model))
 
         # Creating the acquisition function
         sampler = SobolQMCNormalSampler(sample_shape=torch.Size([self.num_samples]))
         self.acqf = self.setacquisition(model=obj_model.model, sampler=sampler, best_f=self.best_f, objective_required = False)
-        init_conditions = self.gen_init_conditions(self.acqf, cand_bounds)
 
         # Optimizing the acquisition function to obtain a new point
-        new_x, _ = self.constrained_optimize_acquistion(self.acqf, self.bounds, init_conditions)
+        new_x, _ = self.optimize_acquistion(self.acqf, self.bounds, init_conditions)
 
         # Add in new data to the existing dataset 
         # for x in new_x:
