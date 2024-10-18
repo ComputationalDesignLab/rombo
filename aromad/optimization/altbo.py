@@ -66,8 +66,8 @@ class BO(BaseBO):
 class ConstrainedBO(BaseBO):
 
     "Class definition for constrained BO with known and unknown constraints"
-    def __init__(self, obj_x, obj_y, cons_x, cons_y, cons_limit, n_unknown_cons, cons_known, num_samples, MCObjective, bounds, acquisition, 
-                 GP, MLL, GP_ARGS = {}, optim_args = {}, training = 'mll'):
+    def __init__(self, obj_x, obj_y, cons_x, cons_y, cons_limit, n_unknown_cons, cons_known, num_samples, MCObjective, lowerBounds, upperBounds, 
+                 acquisition, GP, MLL, GP_ARGS = {}, optim_args = {}, training = 'mll'):
 
         self.xdoe = obj_x
         self.ydoe = obj_y
@@ -76,7 +76,8 @@ class ConstrainedBO(BaseBO):
         self.constraint_limits = cons_limit
         self.n_unknown_cons = n_unknown_cons
         self.cons_known = cons_known
-        self.bounds = bounds
+        self.lowerBounds = lowerBounds
+        self.upperBounds = upperBounds
         self.num_samples = num_samples
         self.acquisition = acquisition
         self.MCObjective = MCObjective
@@ -125,7 +126,7 @@ class ConstrainedBO(BaseBO):
         cons_fun = lambda x: cons_model.predict(torch.tensor(x.reshape((1,x.shape[0])), **tkwargs))
         return cons_fun
 
-    def do_one_step(self, tag, cand_bounds):
+    def do_one_step(self, tag):
 
         f_clamped, x_clamped = self.clamp_to_feasible()
         self.best_f = f_clamped.max().item()
@@ -144,12 +145,15 @@ class ConstrainedBO(BaseBO):
             cons_model_list.append(cons_model)
             cons_func_list.append(self._generate_constraint(cons_model))
 
+        cons_func_list = [cons_func_list.append(self.cons_known[i]) for i in range(len(self.cons_known))]
+
         # Creating the acquisition function
         sampler = SobolQMCNormalSampler(sample_shape=torch.Size([self.num_samples]))
         self.acqf = self.setacquisition(model=obj_model.model, sampler=sampler, best_f=self.best_f, objective_required = False)
 
         # Optimizing the acquisition function to obtain a new point
-        new_x, _ = self.optimize_acquistion(self.acqf, self.bounds, init_conditions)
+        new_x, _ = self.optimize_acquistion_pymoo(self.objective_func, lowerBounds=self.lowerBounds, upperBounds=self.upperBounds,
+                                                  cons_func_list=cons_func_list)
 
         # Add in new data to the existing dataset 
         # for x in new_x:

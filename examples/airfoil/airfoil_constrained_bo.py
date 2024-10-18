@@ -2,10 +2,9 @@ import numpy as np
 import torch
 from aromad.dimensionality_reduction.autoencoder import MLPAutoEnc
 from aromad.test_problems.test_problems import Airfoil
-from aromad.optimization.altbo import AirfoilBO
+from aromad.optimization.altbo import ConstrainedBO
 from prefoil.utils import readCoordFile
 from scipy.io import savemat, loadmat
-from scipy.optimize._numdiff import approx_derivative
 import warnings
 warnings.filterwarnings('ignore')
 
