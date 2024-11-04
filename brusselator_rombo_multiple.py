@@ -2,6 +2,7 @@
 
 # Importing standard libraries
 import torch 
+import time
 from smt.sampling_methods import LHS
 from aromad.rom.nonlinrom import AUTOENCROM
 import numpy as np
