@@ -1,10 +1,10 @@
 aromad.egg-info/
-aromad/__pycache__
-aromad/dimensionality_reduction/__pycache__
-aromad/interpolation/__pycache__
-aromad/optimization/__pycache__
-aromad/rom/__pycache__
-aromad/test_problems/__pycache__
+rombo/__pycache__
+rombo/dimensionality_reduction/__pycache__
+rombo/interpolation/__pycache__
+rombo/optimization/__pycache__
+rombo/rom/__pycache__
+rombo/test_problems/__pycache__
 build/
 examples/airfoil/init_samples/
 examples/airfoil/infill_samples/
