@@ -165,7 +165,7 @@ class BoTorchModel(MLModel):
             return predictions, variances
         
         elif return_format == "numpy":
-            return predictions.cpu().numpy(), variances.cpu().numpy()
+            return predictions.detach().cpu().numpy()#, variances.detach().cpu().numpy()
 
 # Class definition for neural network model
 class NN(MLModel):

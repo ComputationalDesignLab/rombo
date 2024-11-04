@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+from functools import reduce
 from botorch.sampling import SobolQMCNormalSampler
 from botorch.optim.initializers import gen_batch_initial_conditions
 from scipy.optimize import minimize
@@ -91,7 +92,7 @@ class ConstrainedBO(BaseBO):
     def objective_func(self, x):
 
         # Reshaping DVs and converting to tensor
-        x_tensor = torch.tensor(x, **tkwargs)
+        x_tensor = torch.tensor(x.reshape((1,x.shape[0])), **tkwargs)
 
         # Evaluating acquisition function value
         acqf_value = self.acqf(x_tensor)
@@ -101,15 +102,16 @@ class ConstrainedBO(BaseBO):
     "Method to clamp current doe to the feasible set"
     def clamp_to_feasible(self):
 
-        ydoe_prime = self.ydoe.clone()
-        xdoe_prime = self.xdoe.clone()
+        ydoe_prime = self.ydoe.copy()
+        xdoe_prime = self.xdoe.copy()
 
+        idx_list = []
         for i in range(len(self.constraint_limits)):
 
-            idx = (self.ycons[i] >= self.constraint_limits[i])
-            ydoe_prime = ydoe_prime[idx]
-            xdoe_prime = xdoe_prime[idx.reshape(1,-1)[0], :]
+            idx = np.where(self.ycons[i] >= self.constraint_limits[i])
+            idx_list.append(idx)
 
+        idx = reduce(np.intersect1d,(idx_list[0][0], idx_list[1][0])) # Need to generalize this statement
         return -ydoe_prime[idx], xdoe_prime[idx.reshape(1,-1)[0], :]
     
     "Method to generate and train a GP model for constraints or objectives"
@@ -123,7 +125,7 @@ class ConstrainedBO(BaseBO):
     "Method to generate a function for each of the constraints"
     def _generate_constraint(self, cons_model):
 
-        cons_fun = lambda x: cons_model.predict(torch.tensor(x.reshape((1,x.shape[0])), **tkwargs))
+        cons_fun = lambda x: cons_model.predict(torch.tensor(x.reshape((1,x.shape[0])), **tkwargs), return_format = "numpy")
         return cons_fun
 
     def do_one_step(self, tag):
@@ -145,7 +147,7 @@ class ConstrainedBO(BaseBO):
             cons_model_list.append(cons_model)
             cons_func_list.append(self._generate_constraint(cons_model))
 
-        cons_func_list = [cons_func_list.append(self.cons_known[i]) for i in range(len(self.cons_known))]
+        [cons_func_list.append(self.cons_known[i]) for i in range(len(self.cons_known))]
 
         # Creating the acquisition function
         sampler = SobolQMCNormalSampler(sample_shape=torch.Size([self.num_samples]))
