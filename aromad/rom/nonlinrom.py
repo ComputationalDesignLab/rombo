@@ -33,7 +33,7 @@ class AUTOENCROM(ROM):
         train_x = self.param_doe
 
         # Fitting the dimensionality reduction
-        self.dimensionreduction.fit(epochs = 1000)
+        self.dimensionreduction.fit(epochs = 1000, verbose=verbose)
 
         # Computing the encoding for the data
         a = self.dimensionreduction.encoding()

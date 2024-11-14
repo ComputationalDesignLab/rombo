@@ -92,7 +92,7 @@ class AutoencoderReduction(DimensionalityReduction):
             self.model.cuda()
 
     "Method to fit the PyTorch neural network model"
-    def fit(self, epochs):
+    def fit(self, epochs, verbose = False):
 
         # Training autoencoder model
         loss_function = torch.nn.MSELoss()
@@ -113,6 +113,9 @@ class AutoencoderReduction(DimensionalityReduction):
             optimizer.zero_grad()
             loss.backward(retain_graph=True)
             optimizer.step()
+
+            if verbose:
+                print('Epoch: ', epoch, 'Loss: ', loss.item())
             
             # Storing losses for printing
             losses.append(loss.item())

@@ -297,7 +297,7 @@ class BrusselatorPDE(TestFunction):
         h_list = []
         for i in range(len(model_list)):
             prediction = model_list[i].predictROM(x)[0].reshape((2, self.Nx, self.Ny)).detach().cpu().numpy()
-            c = ax.contourf(xplot, yplot, prediction[index,:,:], levels = 15)
+            c = ax.contour(xplot, yplot, prediction[index,:,:], levels = 15, colors=color_list[i])
             h, _ = c.legend_elements()
             h_list.append(h[0])
 
