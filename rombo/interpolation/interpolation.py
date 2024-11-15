@@ -144,9 +144,9 @@ class BoTorchModel(MLModel):
         return gp
 
     "Method to use fully Bayesian training and No U-Turn sampling"
-    def fit_bayesian(self, gp, WARMUP_STEPS=256, NUM_SAMPLES=128):
+    def fit_bayesian(self, gp, WARMUP_STEPS=512, NUM_SAMPLES=256, THINNING=16):
 
-        fit_fully_bayesian_model_nuts(gp, warmup_steps=WARMUP_STEPS, num_samples=NUM_SAMPLES)
+        fit_fully_bayesian_model_nuts(gp, warmup_steps=WARMUP_STEPS, num_samples=NUM_SAMPLES, thinning=THINNING, disable_progbar=False)
 
         return gp
 

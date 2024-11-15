@@ -62,6 +62,9 @@ class ROMBO(BaseBO):
         self.current_prediction = rom_model.predictROM(new_x)
         self.utility_prediction = self.MCObjective.utility(self.current_prediction)
 
+        if self.args['saas'] == True:
+            self.lengthscales = rom_model.gp_model.model.median_lengthscale.detach().cpu().numpy()
+
         # Add in new data to the existing dataset 
         for x in new_x:
             self.xdoe = torch.cat((self.xdoe, x.unsqueeze(0)), dim = 0)

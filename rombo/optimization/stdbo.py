@@ -49,6 +49,9 @@ class BO(BaseBO):
         # Optimizing the acquisition function to obtain a new point
         new_x, _ = self.optimize_acquistion_torch(acqf, self.bounds, tkwargs)
 
+        if self.training == 'bayesian':
+            self.lengthscales = gp_model.model.median_lengthscale.detach().cpu().numpy()
+
         # Add in new data to the existing dataset 
         for x in new_x:
             self.xdoe = torch.cat((self.xdoe, x.unsqueeze(0)), dim = 0)

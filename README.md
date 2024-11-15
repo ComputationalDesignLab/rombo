@@ -1,4 +1,4 @@
-# ROMBO: Bayesian Optimization using nonintrusive Reduced Order Models
+# ROMBO: Bayesian Optimization using Nonintrusive Reduced Order Models
 
 A Python framework for adaptive nonintrusive data-driven reduced-order modeling and its applications to Bayesian optimization.
 
