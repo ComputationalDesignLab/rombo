@@ -4,16 +4,16 @@ import torch
 import gpytorch
 import math
 from smt.sampling_methods import LHS
-from aromad.rom.linrom import PODROM
-from aromad.rom.nonlinrom import AUTOENCROM
+from rombo.rom.linrom import PODROM
+from rombo.rom.nonlinrom import AUTOENCROM
 import numpy as np
 from scipy.io import loadmat
 from botorch.models import KroneckerMultiTaskGP
 from gpytorch.mlls import ExactMarginalLogLikelihood
-from aromad.interpolation.models import MultitaskGPModel
-from aromad.dimensionality_reduction.autoencoder import MLPAutoEnc
-from aromad.test_problems.test_problems import BrusselatorPDE
-from aromad.dimensionality_reduction.dim_red import AutoencoderReduction
+from rombo.interpolation.models import MultitaskGPModel
+from rombo.dimensionality_reduction.autoencoder import MLPAutoEnc
+from rombo.test_problems.test_problems import BrusselatorPDE
+from rombo.dimensionality_reduction.dim_red import AutoencoderReduction
 
 tkwargs = {"device": torch.device("cpu") if not torch.cuda.is_available() else torch.device("cuda:0"), "dtype": torch.float}
 

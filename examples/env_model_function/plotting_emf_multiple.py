@@ -1,11 +1,11 @@
-from aromad.rom.nonlinrom import AUTOENCROM
+from rombo.rom.nonlinrom import AUTOENCROM
 import numpy as np
 from botorch.models import KroneckerMultiTaskGP
 from gpytorch.mlls import ExactMarginalLogLikelihood
-from aromad.dimensionality_reduction.autoencoder import MLPAutoEnc
+from rombo.dimensionality_reduction.autoencoder import MLPAutoEnc
 import torch
 from scipy.io import loadmat
-from aromad.test_problems.test_problems import EnvModelFunction
+from rombo.test_problems.test_problems import EnvModelFunction
 import matplotlib.pyplot as plt
 import warnings
 warnings.filterwarnings('ignore')

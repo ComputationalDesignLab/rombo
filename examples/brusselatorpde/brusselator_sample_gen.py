@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 from scipy.io import savemat
-from aromad.test_problems.test_problems import BrusselatorPDE
+from rombo.test_problems.test_problems import BrusselatorPDE
 from smt.sampling_methods import LHS
 
 tkwargs = {"device": torch.device("cpu") if not torch.cuda.is_available() else torch.device("cuda:0"), "dtype": torch.float}

@@ -1,11 +1,11 @@
-from aromad.rom.nonlinrom import AUTOENCROM
+from rombo.rom.nonlinrom import AUTOENCROM
 import numpy as np
 import torch
 from botorch.models import KroneckerMultiTaskGP
 from gpytorch.mlls import ExactMarginalLogLikelihood
-from aromad.dimensionality_reduction.autoencoder import MLPAutoEnc
+from rombo.dimensionality_reduction.autoencoder import MLPAutoEnc
 from scipy.io import loadmat
-from aromad.test_problems.test_problems import BrusselatorPDE
+from rombo.test_problems.test_problems import BrusselatorPDE
 import matplotlib.pyplot as plt
 
 # Setting data type and device for Pytorch based libraries

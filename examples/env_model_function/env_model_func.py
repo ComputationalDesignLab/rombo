@@ -4,14 +4,14 @@ import torch
 import gpytorch
 import math
 from smt.sampling_methods import LHS
-from aromad.rom.linrom import PODROM
-from aromad.rom.nonlinrom import AUTOENCROM
+from rombo.rom.linrom import PODROM
+from rombo.rom.nonlinrom import AUTOENCROM
 import numpy as np
 from botorch.models import KroneckerMultiTaskGP
 from gpytorch.mlls import ExactMarginalLogLikelihood
-from aromad.interpolation.models import MultitaskGPModel
-from aromad.dimensionality_reduction.autoencoder import MLPAutoEnc
-from aromad.test_problems.test_problems import EnvModelFunction
+from rombo.interpolation.models import MultitaskGPModel
+from rombo.dimensionality_reduction.autoencoder import MLPAutoEnc
+from rombo.test_problems.test_problems import EnvModelFunction
 import warnings
 warnings.filterwarnings('ignore')
 

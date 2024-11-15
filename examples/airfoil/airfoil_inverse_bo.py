@@ -1,12 +1,12 @@
 import numpy as np
 import torch
 import time
-from aromad.dimensionality_reduction.autoencoder import MLPAutoEnc
-from aromad.test_problems.test_problems import InverseAirfoil
-from aromad.optimization.stdbo import BO
-from aromad.rom.nonlinrom import AUTOENCROM
-from aromad.dimensionality_reduction.autoencoder import MLPAutoEnc
-from aromad.optimization.rombo import ROMBO
+from rombo.dimensionality_reduction.autoencoder import MLPAutoEnc
+from rombo.test_problems.test_problems import InverseAirfoil
+from rombo.optimization.stdbo import BO
+from rombo.rom.nonlinrom import AUTOENCROM
+from rombo.dimensionality_reduction.autoencoder import MLPAutoEnc
+from rombo.optimization.rombo import ROMBO
 from scipy.io import savemat, loadmat
 import warnings
 warnings.filterwarnings('ignore')

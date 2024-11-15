@@ -2,11 +2,11 @@
 
 import torch 
 from smt.sampling_methods import LHS
-from aromad.rom.nonlinrom import AUTOENCROM
+from rombo.rom.nonlinrom import AUTOENCROM
 import numpy as np
-from aromad.dimensionality_reduction.autoencoder import MLPAutoEnc
-from aromad.test_problems.test_problems import EnvModelFunction
-from aromad.optimization.rombo import ROMBO
+from rombo.dimensionality_reduction.autoencoder import MLPAutoEnc
+from rombo.test_problems.test_problems import EnvModelFunction
+from rombo.optimization.rombo import ROMBO
 import warnings
 warnings.filterwarnings('ignore')
 

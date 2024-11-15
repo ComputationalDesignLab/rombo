@@ -4,10 +4,10 @@ import torch
 import gpytorch
 import math
 from smt.sampling_methods import LHS
-from aromad.dimensionality_reduction.dim_red import AutoencoderReduction
+from rombo.dimensionality_reduction.dim_red import AutoencoderReduction
 import numpy as np
-from aromad.dimensionality_reduction.autoencoder import MLPAutoEnc
-from aromad.test_problems.test_problems import EnvModelFunction
+from rombo.dimensionality_reduction.autoencoder import MLPAutoEnc
+from rombo.test_problems.test_problems import EnvModelFunction
 import warnings
 warnings.filterwarnings('ignore')
 
