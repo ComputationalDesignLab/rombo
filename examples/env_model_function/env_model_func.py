@@ -17,7 +17,7 @@ warnings.filterwarnings('ignore')
 
 tkwargs = {"device": torch.device("cpu") if not torch.cuda.is_available() else torch.device("cuda:0"), "dtype": torch.float}
 
-# Defining environment model function
+# Defining environment model function 
 problem = EnvModelFunction(input_dim = 4, output_dim = 64)
 
 # Creating the training data
