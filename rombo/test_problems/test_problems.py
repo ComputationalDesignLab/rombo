@@ -323,6 +323,8 @@ class InverseAirfoil(TestFunction):
         fieldfile = os.path.join(directory, 'fieldData.mat')
         field_data = loadmat(fieldfile)
         self.xdoe = field_data['x']
+        if normalized:
+            self.xdoe = (self.xdoe - lower_bounds)/(upper_bounds - lower_bounds)
         self.coefpressure = field_data['CoefPressure']
         self.targetCp = targetCp
         self.normalized = normalized

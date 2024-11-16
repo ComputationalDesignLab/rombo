@@ -24,6 +24,7 @@ from baseclasses import AeroProblem
 tkwargs = {"device": torch.device("cpu") if not torch.cuda.is_available() else torch.device("cuda:0"), "dtype": torch.float}
 torch.cuda.manual_seed(20)
 torch.use_deterministic_algorithms(True)
+np.random.seed(20)
 
 # Defining options for CFD solver, meshing and blackbox
 
@@ -143,10 +144,10 @@ for key in keys:
         lowerBounds = np.append(lowerBounds, lb)
         upperBounds = np.append(upperBounds, ub)
 
-bounds = torch.tensor([lowerBounds, upperBounds], **tkwargs)
+bounds = torch.cat((torch.zeros(1, 13), torch.ones(1, 13))).to(**tkwargs)
 
 # Defining the problem
-problem = InverseAirfoil(directory="./50_samples_rae2822", airfoil=airfoil, targetCp=gbo_cp, upper_bounds=upperBounds, lower_bounds=lowerBounds)
+problem = InverseAirfoil(directory="./50_samples_rae2822", airfoil=airfoil, targetCp=gbo_cp, upper_bounds=upperBounds, lower_bounds=lowerBounds, normalized=True)
 
 n_trials = 1
 n_iterations = 2

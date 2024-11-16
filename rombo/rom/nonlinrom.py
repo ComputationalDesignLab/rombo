@@ -2,6 +2,7 @@ import torch
 from ..interpolation.interpolation import GPRModel, BoTorchModel
 from ..dimensionality_reduction.dim_red import AutoencoderReduction
 from .baserom import ROM
+from botorch.models.transforms import Standardize
 
 class AUTOENCROM(ROM):
 
@@ -49,7 +50,7 @@ class AUTOENCROM(ROM):
             train_Y = a.T.detach().flatten(0).reshape((len(train_X), 1))
 
             # Training GPR model
-            self.gp_model = BoTorchModel(self.low_dim_model, self.low_dim_likelihood, train_X, train_Y, model_args={"task_feature": -1})
+            self.gp_model = BoTorchModel(self.low_dim_model, self.low_dim_likelihood, train_X, train_Y, model_args={"task_feature": -1, "outcome_transform": Standardize(train_Y.shape[-1])})
             self.gp_model.train(type='bayesian')
         else:
             # Training GPR model

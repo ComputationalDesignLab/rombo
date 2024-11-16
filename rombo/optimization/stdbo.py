@@ -2,9 +2,7 @@ import torch
 import numpy as np
 from functools import reduce
 from botorch.sampling import SobolQMCNormalSampler
-from botorch.optim.initializers import gen_batch_initial_conditions
-from scipy.optimize import minimize
-from scipy.optimize import NonlinearConstraint
+from botorch.models.transforms import Standardize
 from .basebo import BaseBO
 from ..interpolation.interpolation import BoTorchModel
 
@@ -39,6 +37,8 @@ class BO(BaseBO):
         print("Best Design for {}:".format(tag), self.xdoe[self.best_x])
         
         # Training the GP model
+        if self.training == 'bayesian':
+            self.gp_args = {"outcome_transform": Standardize(self.ydoe.shape[-1])}
         gp_model = BoTorchModel(self.gp, self.mll, self.xdoe, self.ydoe, model_args=self.gp_args)
         gp_model.train(type=self.training)
 
