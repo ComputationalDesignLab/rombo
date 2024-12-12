@@ -23,8 +23,8 @@ from baseclasses import AeroProblem
 # Arguments for GPU-related calculations
 tkwargs = {"device": torch.device("cpu") if not torch.cuda.is_available() else torch.device("cuda:0"), "dtype": torch.float}
 torch.cuda.manual_seed(20)
-torch.use_deterministic_algorithms(True)
 np.random.seed(20)
+print(torch.cuda.is_available())
 
 # Defining options for CFD solver, meshing and blackbox
 

@@ -1,17 +1,17 @@
-"Example script for building multiple ROM optimizers, solving the environment model problem and comparing the results"
+"Example script for building multiple ROM optimizers, solving the bursselator PDE problem and comparing the results"
 
 # Importing standard libraries
 import torch 
 import time
 from smt.sampling_methods import LHS
-from rombo.rom.nonlinrom import AUTOENCROM
+from aromad.rom.nonlinrom import AUTOENCROM
 import numpy as np
-from rombo.dimensionality_reduction.autoencoder import MLPAutoEnc
-from rombo.test_problems.test_problems import EnvModelFunction
-from rombo.optimization.rombo import ROMBO
-from rombo.optimization.stdbo import BO
-from scipy.io import savemat, loadmat
+from aromad.dimensionality_reduction.autoencoder import MLPAutoEnc
+from aromad.test_problems.test_problems import BrusselatorPDE
+from aromad.optimization.rombo import ROMBO
+from aromad.optimization.altbo import BO
 import argparse
+from scipy.io import savemat, loadmat
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -25,18 +25,18 @@ tkwargs = {"device": torch.device("cpu") if not torch.cuda.is_available() else t
 
 # Parsing input and output dim
 parser = argparse.ArgumentParser()
-parser.add_argument("-input_dim", help="input dimension of the function",type=int)
-parser.add_argument("-output_dim", help="output dimension of the function",type=int)
+parser.add_argument("--input_dim", help="input dimension of the function",type=int)
+parser.add_argument("--trial_num", help="number of the trial run",type=int)
 args = parser.parse_args()
 
-# Creating the initial design of experiments
+# Setting optimization parameters
 inputdim = args.input_dim
 xlimits = np.array([[0.0, 1.0]]*inputdim)
-n_init = 10
-objective = EnvModelFunction(input_dim=inputdim, output_dim=args.output_dim, normalized=True)
+n_init = 5
+objective = BrusselatorPDE(input_dim=inputdim, Nx=64, Ny=64, tkwargs=tkwargs)
 bounds = torch.cat((torch.zeros(1, inputdim), torch.ones(1, inputdim))).to(**tkwargs)
-n_trials = 10
-n_iterations = 40
+n_trials = 2
+n_iterations = 2
 
 boei_objectives = np.zeros((n_trials, n_iterations))
 bologei_objectives = np.zeros((n_trials, n_iterations))
@@ -58,11 +58,27 @@ bologei_doe = np.zeros((n_trials, n_iterations+n_init, inputdim))
 romboei_doe = np.zeros((n_trials, n_iterations+n_init, inputdim))
 rombologei_doe = np.zeros((n_trials, n_iterations+n_init, inputdim))
 
+boei_predictions = np.zeros((n_trials, n_iterations))
+bologei_predictions = np.zeros((n_trials, n_iterations))
+romboei_predictions = np.zeros((n_trials, n_iterations, 8192))
+rombologei_predictions = np.zeros((n_trials, n_iterations, 8192))
+
+boei_EI = np.zeros((n_trials, n_iterations))
+bologei_EI = np.zeros((n_trials, n_iterations))
+romboei_EI = np.zeros((n_trials, n_iterations))
+rombologei_EI = np.zeros((n_trials, n_iterations))
+
+boei_lengthscales = np.zeros((n_trials, n_iterations, inputdim))
+bologei_lengthscales = np.zeros((n_trials, n_iterations, inputdim))
+romboei_lengthscales = np.zeros((n_trials, n_iterations, inputdim))
+rombologei_lengthscales = np.zeros((n_trials, n_iterations, inputdim))
+
 for trial in range(n_trials):
 
     print("\n\n##### Running trial {} out of {} #####".format(trial+1, n_trials))
 
-    sampler = LHS(xlimits=xlimits, criterion="ese")
+    # Loading the initial design of experiments
+    sampler = LHS(xlimits=xlimits, criterion="ese", random_state = args.trial_num)
     xdoe = sampler(n_init)
     xdoe = torch.tensor(xdoe, **tkwargs)
     ydoe = objective.evaluate(xdoe)
@@ -103,22 +119,33 @@ for trial in range(n_trials):
 
         boei_objectives[trial][iteration] = optimizer3.best_f
         boei_dvs[trial][iteration] = optimizer3.best_x
+        boei_EI[trial][iteration] = optimizer3.maxEI
 
         bologei_objectives[trial][iteration] = optimizer4.best_f
         bologei_dvs[trial][iteration] = optimizer4.best_x
+        bologei_EI[trial][iteration] = optimizer4.maxEI
 
         romboei_objectives[trial][iteration] = optimizer2.best_f
         romboei_dvs[trial][iteration] = optimizer2.best_x
+        romboei_EI[trial][iteration] = optimizer2.maxEI
 
         rombologei_objectives[trial][iteration] = optimizer1.best_f
         rombologei_dvs[trial][iteration] = optimizer1.best_x
-    
-    boei_doe[trial] = optimizer3.xdoe
-    bologei_doe[trial] = optimizer4.xdoe
-    romboei_doe[trial] = optimizer2.xdoe
-    rombologei_doe[trial] = optimizer1.xdoe
+        rombologei_EI[trial][iteration] = optimizer1.maxEI
+
+    boei_doe[trial] = optimizer3.xdoe.detach().cpu().numpy()
+    bologei_doe[trial] = optimizer4.xdoe.detach().cpu().numpy()
+    romboei_doe[trial] = optimizer2.xdoe.detach().cpu().numpy()
+    rombologei_doe[trial] = optimizer1.xdoe.detach().cpu().numpy()
  
-results = {"BO_EI": {"objectives": boei_objectives, "design": boei_dvs, "doe": boei_doe, "time": boei_t}, "BO_LOGEI": {"objectives": bologei_objectives, "design": bologei_dvs, "doe": bologei_doe, "time": bologei_t}, 
-           "ROMBO_EI": {"objectives": romboei_objectives, "design": romboei_dvs, "doe": romboei_doe, "time": romboei_t}, "ROMBO_LOGEI": {"objectives": rombologei_objectives, "design": rombologei_dvs, "doe": rombologei_doe, "time": rombologei_t}}
-savemat("env_model_results_{}_{}_SAASBO.mat".format(args.input_dim, args.output_dim), results)
+results = {"BO_EI": {"objectives": boei_objectives, "design": boei_dvs, "doe": boei_doe, "time": boei_t, "predictions": boei_predictions, "EI": boei_EI}, 
+            "BO_LOGEI": {"objectives": bologei_objectives, "design": bologei_dvs, "doe": bologei_doe, "time": bologei_t, "predictions": bologei_predictions, "EI": bologei_EI}, 
+           "ROMBO_EI": {"objectives": romboei_objectives, "design": romboei_dvs, "doe": romboei_doe, "time": romboei_t, "predictions": romboei_predictions, "EI": romboei_EI}, 
+           "ROMBO_LOGEI": {"objectives": rombologei_objectives, "design": rombologei_dvs, "doe": rombologei_doe, "time": rombologei_t, "predictions": rombologei_predictions, "EI": rombologei_EI}}
+savemat("brusselator_results_v1_saasbo.mat", results)
+
+
+
+
+
 

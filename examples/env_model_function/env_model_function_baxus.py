@@ -25,8 +25,8 @@ tkwargs = {"device": torch.device("cpu") if not torch.cuda.is_available() else t
 
 # Parsing input and output dim
 parser = argparse.ArgumentParser()
-parser.add_argument("-input_dim", help="input dimension of the function",type=int)
-parser.add_argument("-output_dim", help="output dimension of the function",type=int)
+parser.add_argument("--input_dim", help="input dimension of the function",type=int)
+parser.add_argument("--output_dim", help="output dimension of the function",type=int)
 args = parser.parse_args()
 
 # Creating the initial design of experiments
@@ -120,5 +120,5 @@ for trial in range(n_trials):
  
 results = {"BO_EI": {"objectives": boei_objectives, "design": boei_dvs, "doe": boei_doe, "time": boei_t}, "BO_LOGEI": {"objectives": bologei_objectives, "design": bologei_dvs, "doe": bologei_doe, "time": bologei_t}, 
            "ROMBO_EI": {"objectives": romboei_objectives, "design": romboei_dvs, "doe": romboei_doe, "time": romboei_t}, "ROMBO_LOGEI": {"objectives": rombologei_objectives, "design": rombologei_dvs, "doe": rombologei_doe, "time": rombologei_t}}
-savemat("env_model_results_{}_{}_SAASBO.mat".format(args.input_dim, args.output_dim), results)
+savemat("env_model_results_{}_{}_BaXUS.mat".format(args.input_dim, args.output_dim), results)
 
