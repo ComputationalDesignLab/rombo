@@ -217,3 +217,4 @@ class NN(MLModel):
         elif return_format == "numpy":
             return predictions.cpu().numpy()
 
+

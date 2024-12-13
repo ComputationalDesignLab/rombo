@@ -12,9 +12,10 @@ tkwargs = {"device": torch.device("cpu") if not torch.cuda.is_available() else t
 
 class EnvModelFunction(TestFunction):
 
-    def __init__(self, input_dim, output_dim, normalized = False):
+    def __init__(self, input_dim, output_dim, normalized = False, baxus_norm = False):
 
         self.normalized = normalized
+        self.baxus_norm = baxus_norm
 
         if input_dim is None:
             self.input_dim = 15
@@ -75,9 +76,11 @@ class EnvModelFunction(TestFunction):
         if self.normalized:
             xnew = x[0:4].clone()
             for i in range(4):
-                xnew[i] = (
-                    xnew[i] * (self.upper_bounds[i] - self.lower_bounds[i])
-                ) + self.lower_bounds[i]
+                xnew[i] = (xnew[i] * (self.upper_bounds[i] - self.lower_bounds[i])) + self.lower_bounds[i]
+        elif self.baxus_norm:
+            xnew = x[0:4].clone()
+            for i in range(4):
+                xnew[i] = ((xnew[i] + 1) * (self.upper_bounds[i] - self.lower_bounds[i]))/2 + self.lower_bounds[i]
         else:
             xnew = x
             
@@ -142,7 +145,7 @@ class EnvModelFunction(TestFunction):
         plt.legend(h_list, label_list, ncol = 2)
         ax.set_xlabel('s')
         ax.set_ylabel('t')
-        plt.savefig(filename)
+        plt.savefig(save_filename)
         plt.show()
 
 class ConstrainedRosenbrockFunction(TestFunction):

@@ -5,7 +5,7 @@ import torch
 
 # Defining keywords for tensor definitions
 tkwargs = {
-    "dtype": torch.float,
+    "dtype": torch.float64,
     "device": torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
 }
 
@@ -13,7 +13,7 @@ tkwargs = {
 class BaxusState:
     dim: int
     eval_budget: int
-    new_bins_on_split: int = 3
+    new_bins_on_split: int = 1
     d_init: int = float("nan")  # Note: post-initialized
     target_dim: int = float("nan")  # Note: post-initialized
     n_splits: int = float("nan")  # Note: post-initialized
@@ -77,29 +77,16 @@ def update_state(state, Y_next):
     return state
 
 def embedding_matrix(input_dim: int, target_dim: int) -> torch.Tensor:
-    if (
-        target_dim >= input_dim
-    ):  # return identity matrix if target size greater than input size
+    if (target_dim >= input_dim):  # return identity matrix if target size greater than input size
         return torch.eye(input_dim, **tkwargs)
 
-    input_dims_perm = (
-        torch.randperm(input_dim, **tkwargs) + 1
-    )  # add 1 to indices for padding column in matrix
+    input_dims_perm = (torch.randperm(input_dim, **tkwargs) + 1)  # add 1 to indices for padding column in matrix
 
-    bins = torch.tensor_split(
-        input_dims_perm, target_dim
-    )  # split dims into almost equally-sized bins
-    bins = torch.nn.utils.rnn.pad_sequence(
-        bins, batch_first=True
-    )  # zero pad bins, the index 0 will be cut off later
+    bins = torch.tensor_split(input_dims_perm, target_dim)  # split dims into almost equally-sized bins
+    bins = torch.nn.utils.rnn.pad_sequence(bins, batch_first=True)  # zero pad bins, the index 0 will be cut off later
 
-    mtrx = torch.zeros(
-        (target_dim, input_dim + 1), **tkwargs)  # add one extra column for padding
-    mtrx = mtrx.scatter_(
-        1,
-        bins,
-        2 * torch.randint(2, (target_dim, input_dim), **tkwargs) - 1,
-    )  # fill mask with random +/- 1 at indices
+    mtrx = torch.zeros((target_dim, input_dim + 1), **tkwargs)  # add one extra column for padding
+    mtrx = mtrx.scatter_(1, bins.type(torch.int64), 2 * torch.randint(2, (target_dim, input_dim), **tkwargs) - 1)  # fill mask with random +/- 1 at indices
 
     return mtrx[:, 1:]  # cut off index zero as this corresponds to zero padding
 

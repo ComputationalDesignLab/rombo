@@ -3,20 +3,24 @@
 Definition of classes for dimensionality reduction using linear and nonlinear methods
 
 - Proper Orthogonal Decomposition
-- Manifold Learning - Torch implementation might be difficult here
 - Autoencoders
 
 """
 import torch
 from abc import ABC, abstractmethod
 
+# Setting data type and device for Pytorch based libraries
+tkwargs = {
+    "dtype": torch.float64,
+    "device": torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
+}
+
 class DimensionalityReduction(ABC):
 
     "Method to assign snapshot vectors and center them if required"
-    def _setsnapshots(self, S, center = True):
+    def _setsnapshots(self, S):
 
-        self.snapshots = S 
-        # Add in centering capability
+        self.snapshots = S.to(**tkwargs)
 
     "Method to fit the dimensionality reduction method to the snapshot data"
     @abstractmethod
@@ -35,11 +39,13 @@ class DimensionalityReduction(ABC):
 
 class LinearReduction(DimensionalityReduction):
 
-    def __init__(self, S, RIC):
+    def __init__(self, S, RIC, mean, std):
 
         # Relative information content is the only parameter required
         self.ric = RIC
         self._setsnapshots(S)
+        self.mean = mean
+        self.std = std
 
     "Method to select the best number of POD modes depending on relative information content"
     def computeRIC(self, s_full):
@@ -65,9 +71,9 @@ class LinearReduction(DimensionalityReduction):
 
         phi, s, psi = torch.linalg.svd(self.snapshots.T, True)
         k = self.computeRIC(s)
-        phi_trunc = phi[:,0:k]
+        self.phi_trunc = phi[:,0:k]
         
-        return phi_trunc, k
+        return self.phi_trunc, k
     
     "Method to compute coefficients for truncated POD modes"
     def encoding(self, phi_k):
@@ -76,10 +82,10 @@ class LinearReduction(DimensionalityReduction):
         return a
 
     "Method to perform a linear backmapping to high-dimensional space"
-    def backmapping(self, phi_trunc, a):
+    def backmapping(self, a):
 
-        field = torch.matmul(phi_trunc, a.T)
-        return field
+        field = torch.matmul(self.phi_trunc.to(**tkwargs), a.mT)
+        return field.mT*self.std + self.mean
 
 class AutoencoderReduction(DimensionalityReduction):
 
@@ -129,3 +135,6 @@ class AutoencoderReduction(DimensionalityReduction):
     def backmapping(self, z):
 
         return self.model.decoder(z)
+    
+
+    
