@@ -4,12 +4,12 @@ import time
 from smt.sampling_methods import LHS
 from rombo.rom.linrom import PODROM
 import numpy as np
-from rombo.test_problems.test_problems import EnvModelFunction
+from rombo.test_problems.test_problems import BrusselatorPDE
 from rombo.optimization.rombo import ROMBO
 from rombo.optimization.stdbo import BO
 from botorch.models.transforms import Standardize
-from scipy.io import savemat, loadmat
 import argparse
+from scipy.io import savemat, loadmat
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -28,14 +28,14 @@ parser.add_argument("--mc_samples", help="number of MC samples", type=int)
 parser.add_argument("--trial_num", help="number of the trial of the program",type=int)
 args = parser.parse_args()
 
-# Instantiating the problem and defining optimization parameters
+# Instantiating the problem and setting the optimization parameters
 inputdim = args.input_dim
 xlimits = np.array([[0.0, 1.0]]*inputdim)
-n_init = 10
-objective = EnvModelFunction(input_dim=inputdim, output_dim=args.output_dim, normalized=True)
+n_init = 15
+objective = BrusselatorPDE(input_dim=inputdim, Nx=64, Ny=64, tkwargs=tkwargs)
 bounds = torch.cat((torch.zeros(1, inputdim), torch.ones(1, inputdim))).to(**tkwargs)
 n_trials = 1
-n_iterations = 40
+n_iterations = 25
 
 # Defining arrays to store values during the optimization loop
 romboei_objectives = np.zeros((n_trials, n_iterations))
@@ -59,8 +59,8 @@ rombologei_k = np.zeros((n_trials, n_iterations))
 for trial in range(n_trials):
 
     print("\n\n##### Running trial {} out of {} #####".format(trial+1, n_trials))
-    
-    # Generating the initial samples for the trial
+
+    # Generating the initial design of experiments
     sampler = LHS(xlimits=xlimits, criterion="ese", random_state=args.trial_num)
     xdoe = sampler(n_init)
     xdoe = torch.tensor(xdoe, **tkwargs)
@@ -107,4 +107,5 @@ for trial in range(n_trials):
 # Saving the final data
 results = {"ROMBO_EI": {"objectives": romboei_objectives, "design": romboei_dvs, "doe": romboei_doe, "n_modes": romboei_k, "time": romboei_t}, 
             "ROMBO_LOGEI": {"objectives": rombologei_objectives, "design": rombologei_dvs, "doe": rombologei_doe, "n_modes": rombologei_k, "time": rombologei_t}}
-savemat("./env_model_results_{}_{}_POD_BO_trial_{}_MC_{}.mat".format(args.input_dim, args.output_dim, args.trial_num, args.mc_samples), results)
+savemat("./brusselator_results_{}_{}_POD_BO_trial_{}_MC_{}.mat".format(args.input_dim, args.output_dim, args.trial_num, args.mc_samples), results)
+
