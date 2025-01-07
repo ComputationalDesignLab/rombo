@@ -1,11 +1,3 @@
-"""
-
-Definition of classes for dimensionality reduction using linear and nonlinear methods
-
-- Proper Orthogonal Decomposition
-- Autoencoders
-
-"""
 import torch
 from abc import ABC, abstractmethod
 

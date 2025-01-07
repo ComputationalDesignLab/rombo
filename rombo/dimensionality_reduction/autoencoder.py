@@ -50,46 +50,7 @@ class MLPAutoEnc(nn.Module):
         encoded = self.encoder(x)
         return self.decoder(encoded)
 
-class SupervisedAutoEnc(nn.Module):
 
-    "Definition of a supervised autoencoder with labels included"
-    def __init__(self, high_dim, hidden_dims, activation, zd, n_labels, x_labels):
-        super(SupervisedAutoEnc, self).__init__()
-
-        self.xlabels = x_labels
-        encoder_layers = []
-        last_dim = high_dim
-
-        for dim in hidden_dims:
-
-            encoder_layers.append(nn.Linear(last_dim, dim))
-            encoder_layers.append(activation)
-            last_dim = dim
-        
-        encoder_layers.append(nn.Linear(last_dim, zd))
-        self.encoder = nn.Sequential(*encoder_layers)
-
-        decoder_layers = []
-        last_dim = zd + n_labels
-        hidden_dims.reverse()
-        for dim in hidden_dims:
-
-            decoder_layers.append(nn.Linear(last_dim, dim))
-            decoder_layers.append(activation)
-            last_dim = dim
-
-        decoder_layers.append(nn.Linear(last_dim, high_dim))
-        self.decoder = nn.Sequential(*decoder_layers)
-
-    def forward(self, y):
-
-        encoded = self.encoder(y)
-        return self.decoder(torch.cat([encoded, self.xlabels], dim = 1))
-
-    def forward2(self, y, xlabels):
-
-        encoded = self.encoder(y)
-        return self.decoder(torch.cat([encoded, xlabels], dim = 1))
 
 
 
