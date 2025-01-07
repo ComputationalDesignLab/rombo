@@ -7,8 +7,7 @@ Current Implementation:
 
 """
 import torch
-import gpytorch
-from ..interpolation.interpolation import GPRModel, BoTorchModel
+from ..interpolation.interpolation import GPRModel, BoTorchModelList
 from ..dimensionality_reduction.dim_red import LinearReduction
 from .baserom import ROM
 from botorch.models.transforms import Standardize
@@ -21,12 +20,11 @@ tkwargs = {
 
 class PODROM(ROM):
     
-    def __init__(self, param_doe, snapshot_matrix, ric, low_dim_model, low_dim_likelihood, saas = False):
+    def __init__(self, param_doe, snapshot_matrix, ric, low_dim_model, low_dim_likelihood):
         
         # Setting the training data of the model
         self.param_doe = self._checkTensor(param_doe)
         self.high_dim_data = self._checkTensor(snapshot_matrix)
-        self.saas = saas
 
         # Setting the interpolation and regression data for the model
         self.low_dim_model = low_dim_model
@@ -47,26 +45,10 @@ class PODROM(ROM):
 
         # Computing the encoding for the data
         a = self.dimensionreduction.encoding(self.phi)
-        a = a.T
-        a_prime = a.repeat(a.shape[-1],1,1).reshape(a.shape[-1], train_x.shape[0]*a.shape[-1], 1)
-        train_x = train_x.repeat(a.shape[-1],1,1)
-        print(train_x.shape)
-        print(a_prime.shape)
 
-        if self.saas:
-            I = []
-            for i in range(a.T.shape[-1]):
-                I.append(i*torch.ones((len(train_x), 1), **tkwargs))
-            train_X = torch.cat([torch.cat([train_x, i], -1) for i in I])
-            train_Y = a.detach().flatten(0).reshape((len(train_X), 1))
-
-            # Training GPR model
-            self.gp_model = BoTorchModel(self.low_dim_model, self.low_dim_likelihood, train_X, train_Y, model_args={"task_feature": -1, "outcome_transform": Standardize(train_Y.shape[-1])})
-            self.gp_model.train(type='bayesian')
-        else:
-            # Training GPR model
-            self.gp_model = BoTorchModel(self.low_dim_model, self.low_dim_likelihood, train_x, a_prime.detach(), model_args={"likelihood":gpytorch.likelihoods.GaussianLikelihood(batch_shape=torch.Size([9]))})#"outcome_transform": Standardize(a_prime.detach().shape[-1])})
-            self.gp_model.train(type='mll')
+        # Training GPR model
+        self.gp_model = BoTorchModelList(self.low_dim_model, self.low_dim_likelihood, train_x, a.T.detach(), model_args={"outcome_transform": Standardize(m=1)})
+        self.gp_model.train()
 
     "Method to predict using the trained ROM for a given test data"
     def predictROM(self, test_x):

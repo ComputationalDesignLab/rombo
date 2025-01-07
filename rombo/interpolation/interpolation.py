@@ -4,6 +4,7 @@ PyTorch based models for interpolation procedures in data-driven ROMs
 Current Implementation:
     
     - GP models through GPyTorch
+    - NN models through PyTorch
 
 """
 
@@ -12,10 +13,11 @@ import torch
 import gpytorch
 from botorch.optim.fit import fit_gpytorch_mll_torch
 from botorch.fit import fit_fully_bayesian_model_nuts
+from botorch.models.model_list_gp_regression import ModelListGP
 from abc import ABC, abstractmethod
 
 # Arguments for GPU-related calculations
-tkwargs = {"device": torch.device("cpu") if not torch.cuda.is_available() else torch.device("cuda:0"), "dtype": torch.float}
+tkwargs = {"device": torch.device("cpu") if not torch.cuda.is_available() else torch.device("cuda:0"), "dtype": torch.float64}
 
 # Base class definition for low dimensional model
 class MLModel(ABC):
@@ -125,7 +127,7 @@ class BoTorchModel(MLModel):
     def train(self, type = 'mll'):
 
         # Instantiate the model
-        gp = self.model(self.train_x, self.train_y, **self.model_args)
+        gp = self.model(self.train_x, self.train_y.to(**tkwargs), **self.model_args)
 
         # Train model
         if type == 'mll':
@@ -146,11 +148,58 @@ class BoTorchModel(MLModel):
     "Method to use fully Bayesian training and No U-Turn sampling"
     def fit_bayesian(self, gp, WARMUP_STEPS=256, NUM_SAMPLES=128, THINNING=16):
 
-        fit_fully_bayesian_model_nuts(gp, warmup_steps=WARMUP_STEPS, num_samples=NUM_SAMPLES, thinning=THINNING, disable_progbar=False)
+        fit_fully_bayesian_model_nuts(gp, warmup_steps=WARMUP_STEPS, num_samples=NUM_SAMPLES, thinning=THINNING, disable_progbar=True)
 
         return gp
 
     "Method to predict using the BoTorch model"
+    def predict(self, xtest, return_format = 'tensor'):
+
+        # Obtaining the posterior distribution of the model
+        posterior = self.model.posterior(xtest)
+        # Obtaining mean value predictions
+        predictions = posterior.mean
+        # Obtaining variances
+        variances = posterior.variance
+
+        if return_format == "tensor":
+            return predictions, variances
+        
+        elif return_format == "numpy":
+            return predictions.cpu().numpy(), variances.cpu().numpy()
+
+# Class definition for a GP model list built from BoTorch
+class BoTorchModelList(MLModel):
+    
+    def __init__(self, model, mll, train_x, train_y, model_args = {}):
+
+        self.model = model
+        self.mll = mll
+        self._settraindata(train_x, train_y)
+        self.model_args = model_args
+    
+    "Method to train the BoTorch model - this requires significantly less inputs because of preprocessing done by BoTorch"
+    def train(self):
+        models = []
+        for i in range(self.train_y.shape[-1]):
+            train_Y = self.train_y[..., i : i + 1]
+            models.append(self.model(self.train_x, train_Y, **self.model_args))
+        gp = ModelListGP(*models)
+
+        # Train model
+        gp = self.fit_mll(gp)
+        
+        self.model = gp
+
+    "Method to train using maximum likelihood estimation"
+    def fit_mll(self, gp):
+
+        likelihood = self.mll(gp.likelihood, gp)
+        fit_gpytorch_mll_torch(likelihood)
+
+        return gp
+
+    "Method to predict using the BoTorch model list"
     def predict(self, xtest, return_format = 'tensor'):
 
         # Obtaining the posterior distribution of the model

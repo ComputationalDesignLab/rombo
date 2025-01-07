@@ -102,7 +102,7 @@ class AutoencoderReduction(DimensionalityReduction):
 
         # Training autoencoder model
         loss_function = torch.nn.MSELoss()
-
+        print(self.snapshots.shape)
         optimizer = torch.optim.Adam(self.model.parameters(),
                                     lr = 1e-3,
                                     weight_decay = 1e-8)
@@ -135,6 +135,3 @@ class AutoencoderReduction(DimensionalityReduction):
     def backmapping(self, z):
 
         return self.model.decoder(z)
-    
-
-    

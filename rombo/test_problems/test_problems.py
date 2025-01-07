@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from pde import PDE, FieldCollection, ScalarField, UnitGrid
 
 # Arguments for GPU-related calculations
-tkwargs = {"device": torch.device("cpu") if not torch.cuda.is_available() else torch.device("cuda:0"), "dtype": torch.float}
+tkwargs = {"device": torch.device("cpu") if not torch.cuda.is_available() else torch.device("cuda:0"), "dtype": torch.float64}
 
 class EnvModelFunction(TestFunction):
 
@@ -265,13 +265,13 @@ class BrusselatorPDE(TestFunction):
         ss = sol_tensor[np.isnan(sol_tensor)]
         sol_tensor[np.isnan(sol_tensor)] = 1e5 * np.random.randn(*ss.shape)
         
-        return torch.tensor(sol_tensor, **self.tkwargs)
+        return torch.tensor(sol_tensor, **tkwargs)
     
     def evaluate(self, X):
         return torch.stack([self.function(x) for x in X])
 
     def score(self, y):
-        weighting = torch.ones((2,self.Nx,self.Ny))/10
+        weighting = torch.ones((2,self.Nx,self.Ny), **tkwargs)/10
         weighting[:, [0, 1, -2, -1], :] = 1.0
         weighting[:, :, [0, 1, -2, -1]] = 1.0
         weighted_samples = weighting * y
@@ -369,9 +369,3 @@ class InverseAirfoil(TestFunction):
         out = torch.square(torch.linalg.norm(y - self.targetCp, ord = 2, dim = -1))
 
         return -out
-
-    
-
-
-
-

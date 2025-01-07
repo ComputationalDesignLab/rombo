@@ -7,9 +7,18 @@ from pymoo.optimize import minimize
 from pymoo.termination.default import DefaultSingleObjectiveTermination
 from abc import ABC, abstractmethod
 
+import numpy as np
+import torch
+from botorch.optim import optimize_acqf
+from pymoo.core.problem import ElementwiseProblem
+from pymoo.algorithms.soo.nonconvex.de import DE
+from pymoo.optimize import minimize
+from pymoo.termination.default import DefaultSingleObjectiveTermination
+from abc import ABC, abstractmethod
+
 # Setting data type and device for Pytorch based libraries
 tkwargs = {
-    "dtype": torch.float,
+    "dtype": torch.float64,
     "device": torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
 }
 

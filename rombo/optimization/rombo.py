@@ -4,7 +4,6 @@ from botorch.acquisition.objective import GenericMCObjective
 from botorch.optim.initializers import gen_batch_initial_conditions
 from botorch.optim import optimize_acqf
 from .basebo import BaseBO
-from .baxus_utils import *
 
 # Setting data type and device for Pytorch based libraries
 tkwargs = {
@@ -46,25 +45,25 @@ class ROMBO(BaseBO):
         print("\nBest Objective Value for {}:".format(tag), self.best_f)
         print("Best Design for {}:".format(tag), self.xdoe[self.best_x])
 
-        rom_model = self.rom(self.xdoe, self.ydoe, **self.args)
+        self.rom_model = self.rom(self.xdoe, self.ydoe, **self.args)
 
         # Training the ROM
-        rom_model.trainROM(verbose=False)
-        self.setobjective(rom_model)
+        self.rom_model.trainROM(verbose=False)
+        self.setobjective(self.rom_model)
 
         # Creating the acquisition function
         sampler = SobolQMCNormalSampler(sample_shape = torch.Size([self.num_samples]))
-        acqf = self.setacquisition(model = rom_model.gp_model.model, sampler=sampler, best_f=self.best_f)
+        acqf = self.setacquisition(model = self.rom_model.gp_model.model, sampler=sampler, best_f=self.best_f)
 
         # Optimizing the acquisition function to obtain a new point
         new_x, self.maxEI = self.optimize_acquistion_torch(acqf, self.bounds, tkwargs)
 
         # Storing prediction of ROM for the field and the utility function of the problem
-        self.current_prediction = rom_model.predictROM(new_x)
+        self.current_prediction = self.rom_model.predictROM(new_x)
         self.utility_prediction = self.MCObjective.utility(self.current_prediction)
 
         if self.args['saas'] == True:
-            self.lengthscales = rom_model.gp_model.model.median_lengthscale.detach().cpu().numpy()
+            self.lengthscales = self.rom_model.gp_model.model.median_lengthscale.detach().cpu().numpy()
 
         # Add in new data to the existing dataset 
         for x in new_x:
@@ -72,100 +71,6 @@ class ROMBO(BaseBO):
             new_y = self.MCObjective.function(x)
             new_y = new_y.reshape((1, self.ydoe.shape[-1]))
             self.ydoe = torch.cat((self.ydoe, new_y), dim = 0)
-
-    "Method to run the optimization"
-    def optimize(self, tag, n_iterations, tkwargs):
-
-        for iteration in range(n_iterations):
-
-            print("\n\n##### Running iteration {} out of {} #####".format(iteration+1, n_iterations))
-            self.do_one_step(tag, tkwargs)
-
-class ROMBO_BAxUS(BaseBO):
-
-    "Class definition for ROMBO with BAxUS embedding - utilizes BoTorch to do the calculations and maximization of the acquisition function"
-
-    def __init__(self, init_x, init_y, num_samples, MCObjective, bounds, acquisition, ROM, ROM_ARGS, state, embedding):
-
-        # Specifying the data for baxus method
-        self.xdoe = self._checkTensor(init_x)
-        self.ydoe = self._checkTensor(init_y)
-        self.x_baxus_input = self.xdoe @ embedding.T
-        self.y_baxus = MCObjective.evaluate(self.x_baxus_input)
-
-        self.state = state
-        self.embedding = embedding
-        self.bounds = bounds
-        self.num_samples = num_samples
-        self.acquisition = acquisition
-        self.MCObjective = MCObjective
-        self.rom = ROM
-        self.args = ROM_ARGS
-
-    "Method to set the objective for MC Bayesian optimization"
-    def setobjective(self, model):
-
-        "Function definition for MC Objective"
-        def function(samples, X=None):
-
-            samples = model.dimensionreduction.backmapping(samples)
-            return self.MCObjective.utility(samples)
-
-        self.objective = GenericMCObjective(function)
-
-    "Method to run one optimization step using the BAxUS embedding"
-    def do_one_step(self, tag):
-        
-        self.best_f = self.MCObjective.utility(self.ydoe).max().item()
-        self.best_x = self.MCObjective.utility(self.ydoe).argmax().item()
-        print("\nBest Objective Value for {}:".format(tag), self.best_f)
-        print("Best Design for {}:".format(tag), self.xdoe[self.best_x])
-
-        self.rom_model = self.rom(self.xdoe, self.y_baxus, **self.args)
-
-        # Training the ROM
-        self.rom_model.trainROM(verbose=False)
-        self.setobjective(self.rom_model)
-
-        # Scale the TR to be proportional to the lengthscales
-        x_center = self.xdoe[self.best_x, :].clone()
-        weights = self.rom_model.gp_model.model.covar_module.lengthscale.detach().view(-1)
-        weights = weights / weights.mean()
-        weights = weights / torch.prod(weights.pow(1.0 / len(weights)))
-        tr_lb = torch.clamp(x_center - weights * self.state.length, -1.0, 1.0)
-        tr_ub = torch.clamp(x_center + weights * self.state.length, -1.0, 1.0)
-
-        # Creating the acquisition function
-        sampler = SobolQMCNormalSampler(sample_shape = torch.Size([self.num_samples]))
-        acqf = self.setacquisition(model = self.rom_model.gp_model.model, sampler=sampler, best_f=self.best_f)
-
-        # Optimizing the acquisition function to obtain a new point
-        tr_bounds = torch.stack([tr_lb, tr_ub])
-        new_x, self.maxEI = self.optimize_acquistion_torch(acqf, tr_bounds, tkwargs)
-
-        for x in new_x:
-            x_next = x.unsqueeze(0) @ self.embedding.T
-            new_y = self.MCObjective.function(x_next)
-            new_y = new_y.reshape((1, self.y_baxus.shape[-1]))
-
-            # Updating the state
-            self.state = update_state(state=self.state, Y_next=new_y)
-
-            self.x_baxus_input = torch.cat((self.x_baxus_input, x_next.unsqueeze(0)), dim = 0)
-            self.xdoe = torch.cat((self.xdoe, x.unsqueeze(0)), dim=0)
-            self.y_baxus = torch.cat((self.ydoe, new_y), dim = 0)
-
-        if self.state.restart_triggered:
-            self.state.restart_triggered = False
-            print("increasing target space")
-            S, X_baxus_target = increase_embedding_and_observations(
-                S, X_baxus_target, self.state.new_bins_on_split
-            )
-            print(f"new dimensionality: {len(S)}")
-            self.state.target_dim = len(S)
-            self.state.length = self.state.length_init
-            self.state.failure_counter = 0
-            self.state.success_counter = 0
 
     "Method to run the optimization"
     def optimize(self, tag, n_iterations, tkwargs):
@@ -295,6 +200,12 @@ class ConstrainedROMBO(BaseBO):
 
             print("\n\n##### Running iteration {} out of {} #####".format(iteration+1, n_iterations))
             self.do_one_step(tag, tkwargs)
+
+
+        
+
+
+
 
 
         
