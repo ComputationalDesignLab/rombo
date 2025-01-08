@@ -10,9 +10,10 @@ tkwargs = {
 class DimensionalityReduction(ABC):
 
     "Method to assign snapshot vectors and center them if required"
-    def _setsnapshots(self, S):
+    def _setsnapshots(self, S, center = True):
 
-        self.snapshots = S.to(**tkwargs)
+        self.snapshots = S 
+        # Add in centering capability
 
     "Method to fit the dimensionality reduction method to the snapshot data"
     @abstractmethod
@@ -94,7 +95,7 @@ class AutoencoderReduction(DimensionalityReduction):
 
         # Training autoencoder model
         loss_function = torch.nn.MSELoss()
-        print(self.snapshots.shape)
+
         optimizer = torch.optim.Adam(self.model.parameters(),
                                     lr = 1e-3,
                                     weight_decay = 1e-8)
@@ -125,5 +126,5 @@ class AutoencoderReduction(DimensionalityReduction):
 
     "Method to compute high dimensional solution using the decoder neural network"
     def backmapping(self, z):
-
+    
         return self.model.decoder(z)

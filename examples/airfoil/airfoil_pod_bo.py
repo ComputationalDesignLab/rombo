@@ -1,0 +1,210 @@
+# Importing standard libraries
+import numpy as np
+import torch
+import time
+from rombo.test_problems.test_problems import InverseAirfoil
+from rombo.optimization.stdbo import BO
+from rombo.rom.linrom import PODROM
+from rombo.optimization.rombo import ROMBO
+from scipy.io import savemat, loadmat
+import argparse
+import warnings
+warnings.filterwarnings('ignore')
+
+# Importing relevant classes from BoTorch
+from botorch.acquisition import qExpectedImprovement, qLogExpectedImprovement
+from botorch.models import SingleTaskGP
+from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
+
+# Libraries for running airfoil calculations
+from blackbox import AirfoilCST
+from baseclasses import AeroProblem
+
+# Arguments for GPU-related calculations
+tkwargs = {"device": torch.device("cpu") if not torch.cuda.is_available() else torch.device("cuda:0"), "dtype": torch.float64}
+torch.cuda.manual_seed(20)
+torch.use_deterministic_algorithms(True)
+np.random.seed(20)
+
+# Parsing parameters from the command line
+parser = argparse.ArgumentParser()
+parser.add_argument('--trial', help='which trial number is being run', type=int)
+args = parser.parse_args()
+
+# Defining options for CFD solver, meshing and blackbox
+
+# Flow solver options
+solverOptions = {
+    # Common Parameters
+    "monitorvariables": ["cl", "cd", "cmz", "yplus","cdp"],
+    "surfaceVariables": ["cp","cf","cfx","cfy","cfz","vx","vy","vz","rho","mach"],
+    "writeTecplotSurfaceSolution": True,
+    "writeSurfaceSolution": True,
+    "writeVolumeSolution": True,
+    # Physics Parameters
+    "equationType": "RANS",
+    "smoother": "DADI",
+    "MGCycle": "sg",
+    "nsubiterturb": 10,
+    "nCycles": 10000,
+    # ANK Solver Parameters
+    "useANKSolver": True,
+    "ANKNSubiterTurb":100,
+    'ANKTurbKSPDebug': True,
+    "ANKJacobianLag": 5,
+    "ANKUnsteadyLSTol": 1.2,
+    "ANKPhysicalLSTol": 0.30,
+    "ANKOuterPreconIts": 2,
+    "ANKInnerPreconIts": 2,
+    "ANKASMOverlap": 2,
+    "ANKSecondOrdSwitchTol": 1e-3,
+    "ANKCFLLimit":1e3,
+    # NK Solver Parameters
+    "useNKSolver": True,
+    "NKSwitchTol": 1e-6,
+    "NKSubspaceSize": 400,
+    "NKASMOverlap": 3,
+    "NKPCILUFill": 4,
+    "NKJacobianLag": 5,
+    "NKOuterPreconIts": 3,
+    "NKInnerPreconIts": 3,
+    # Termination Criteria
+    "L2Convergence": 1e-14,
+    "L2ConvergenceCoarse": 1e-4
+}
+
+# Volume meshing options
+meshingOptions = {
+    # Input Parameters
+    "unattachedEdgesAreSymmetry": False,
+    "outerFaceBC": "farfield",
+    "autoConnect": True,
+    "BC": {1: {"jLow": "zSymm", "jHigh": "zSymm"}},
+    "families": "wall",
+    # Grid Parameters
+    "N": 257,
+    "s0": 1e-6,
+    "marchDist": 100.0,
+    # Pseudo Grid Parameters
+    "ps0": -1.0,
+    "pGridRatio": -1.0,
+    "cMax": 3.0,
+    # Smoothing parameters
+    "epsE": 1.0,
+    "epsI": 2.0,
+    "theta": 3.0,
+    "volCoef": 0.25,
+    "volBlend": 0.0001,
+    "volSmoothIter": 100,
+}
+
+# Creating aero problem
+ap = AeroProblem(
+    name="ap", alpha=2.0, mach=0.734, reynolds=6.5e6, reynoldsLength=1.0, T=288.15,
+    areaRef=1.0, chordRef=1.0, evalFuncs=["cl", "cd", "cdp", "cdv","cmz"], xRef = 0.25, yRef = 0.0, zRef = 0.0
+)
+
+# Options for blackbox
+options = {
+    "solverOptions": solverOptions,
+    "directory": "./infill_samples_POD_BO_trial{}".format(args.trial),
+    "noOfProcessors": 64,
+    "aeroProblem": ap,
+    "airfoilFile": "rae2822_L1.dat",
+    "numCST": [6, 6],
+    "meshingOptions": meshingOptions,
+    "refine": 0,
+    "getFlowFieldData": True,
+    "region": "surface",
+    "writeAirfoilCoordinates": True,
+    "plotAirfoil": True
+}
+
+# Defining blackbox object
+airfoil = AirfoilCST(options=options)
+
+# Target pressure distribution
+gbo_data = loadmat('./GBO_results.mat')
+gbo_cp = torch.tensor(gbo_data['Pressure_Dist'], **tkwargs)
+
+# Defining the bounds of the problem and adding the design variables to the blackbox class
+keys = ["upper", "lower"]
+airfoil.addDV("alpha", lowerBound=1.5, upperBound=3.5)
+lowerBounds = np.array([1.5])
+upperBounds = np.array([3.5])
+keys = ["upper", "lower"]
+for key in keys:
+    coeff = airfoil.DVGeo.defaultDV[key] # get the fitted CST coeff
+    if key == "upper":
+        dv_min = coeff - 0.30*coeff
+        dv_max = coeff + 0.30*coeff
+    else:
+        dv_min = coeff - 0.30*coeff
+        dv_max = coeff + 0.30*coeff
+    airfoil.addDV(key, lowerBound=dv_min, upperBound=dv_max)
+    for i in range(len(coeff)):
+        lb = min([dv_min[i],dv_max[i]])
+        ub = max([dv_min[i],dv_max[i]])
+        lowerBounds = np.append(lowerBounds, lb)
+        upperBounds = np.append(upperBounds, ub)
+
+bounds = torch.cat((torch.zeros(1, 13), torch.ones(1, 13))).to(**tkwargs)
+
+# Instantiating the problem and optimization parameters
+problem = InverseAirfoil(directory="./50_samples_rae2822_HF_{}".format(args.trial), airfoil=airfoil, targetCp=gbo_cp, 
+                        upper_bounds=upperBounds, lower_bounds=lowerBounds, normalized=True)
+
+n_trials = 1
+n_iterations = 75
+
+# Defining arrays to store values during the optimization loop
+romboei_objectives = np.zeros((n_trials, n_iterations))
+rombologei_objectives = np.zeros((n_trials, n_iterations))
+
+romboei_dvs = np.zeros((n_trials, n_iterations))
+rombologei_dvs = np.zeros((n_trials, n_iterations))
+
+romboei_t = np.zeros((n_trials, n_iterations))
+rombologei_t = np.zeros((n_trials, n_iterations))
+
+romboei_k = np.zeros((n_trials, n_iterations))
+rombologei_k = np.zeros((n_trials, n_iterations))
+
+for trial in range(n_trials):
+
+    # Defining the BO optimizers
+    rom_args = {"ric": 0.9999, "low_dim_model": SingleTaskGP, "low_dim_likelihood": SumMarginalLogLikelihood,
+                "saas": False}
+    optim_args = {"q": 1, "num_restarts": 25, "raw_samples": 512}
+    
+    optimizer3 = ROMBO(init_x=problem.xdoe, init_y=problem.coefpressure, num_samples=32, bounds = bounds, MCObjective=problem, acquisition=qExpectedImprovement, 
+                       ROM=PODROM, ROM_ARGS=rom_args)
+    optimizer4 = ROMBO(init_x=problem.xdoe, init_y=problem.coefpressure, num_samples=32, bounds = bounds, MCObjective=problem, acquisition=qLogExpectedImprovement, 
+                        ROM=PODROM, ROM_ARGS=rom_args)
+    optim_args = {"q": 1, "num_restarts": 25, "raw_samples": 512}
+
+    # Running the optimization loop
+    for iteration in range(n_iterations):
+
+        print("\n\n##### Running iteration {} out of {} #####".format(iteration+1, n_iterations))
+        ti = time.time()
+        optimizer3.do_one_step(tag = 'PODBO + EI', tkwargs=optim_args)
+        tf = time.time()
+        romboei_t[trial][iteration] = tf-ti
+        ti = time.time()
+        optimizer4.do_one_step(tag = 'PODBO + Log EI', tkwargs=optim_args)
+        tf = time.time()
+        rombologei_t[trial][iteration] = tf-ti
+
+        romboei_objectives[trial][iteration] = optimizer3.best_f
+        romboei_dvs[trial][iteration] = optimizer3.best_x
+        romboei_k[trial][iteration] = optimizer3.rom_model.k
+
+        rombologei_objectives[trial][iteration] = optimizer4.best_f
+        rombologei_dvs[trial][iteration] = optimizer4.best_x
+        rombologei_k[trial][iteration] = optimizer4.rom_model.k
+
+# Saving the final data
+results = {"ROMBO_EI": {"objectives": romboei_objectives, "design": romboei_dvs, "xdoe": optimizer3.xdoe, "ydoe": optimizer3.ydoe, "time": romboei_t, "n_modes": romboei_k}, 
+            "ROMBO_LOGEI": {"objectives": rombologei_objectives, "design": rombologei_dvs, "xdoe": optimizer4.xdoe, "ydoe": optimizer4.ydoe, "time": rombologei_t, "n_modes": rombologei_k}}
+savemat("./airfoil_inverse_design_POD_trial{}.mat".format(args.trial), results)
