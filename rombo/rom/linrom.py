@@ -20,11 +20,12 @@ tkwargs = {
 
 class PODROM(ROM):
     
-    def __init__(self, param_doe, snapshot_matrix, ric, low_dim_model, low_dim_likelihood):
+    def __init__(self, param_doe, snapshot_matrix, ric, low_dim_model, low_dim_likelihood, saas = False):
         
         # Setting the training data of the model
         self.param_doe = self._checkTensor(param_doe)
         self.high_dim_data = self._checkTensor(snapshot_matrix)
+        self.saas = saas
 
         # Setting the interpolation and regression data for the model
         self.low_dim_model = low_dim_model
@@ -59,8 +60,3 @@ class PODROM(ROM):
         # Backmapping and unstandardizing
         field = self.dimensionreduction.backmapping(predicted_a)
         return field
-        
-
-        
-        
-        
