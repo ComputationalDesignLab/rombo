@@ -6,6 +6,4 @@ rombo/optimization/__pycache__
 rombo/rom/__pycache__
 rombo/test_problems/__pycache__
 build/
-examples/airfoil/50_samples_rae2822/
-examples/airfoil/infill_samples/
-examples/airfoil/GBO_results.mat
+.DS_store
