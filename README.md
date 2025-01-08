@@ -9,6 +9,11 @@ project high dimensional outputs into a latent space. The latent space is modele
 
 ### Training a simple nonintrusive reduced order model within the ROMBO framework
 
+The following example code demonstrates how the ROMBO framework modules can be used to define a deep learning ROM model and train it to predict the environment model function using
+the corresponding test problem class. First, the relevant modules and libraries are imported. The SMT package is used to generate a latin hypercube sampling (LHS) plan and the samples are
+evaluated using the evaluate method of the test problem class. A set of testing data is also generated in a similar manner. The autoencoder architecture is defined using the pre-built model
+inside ROMBO that allows the creation of a simple fully-connected autoencoder network. A user may also define their own architecture using PyTorch and use it along with the ROM model class within the ROMBO framework. After defining the autoencoder, the `AUTOENCROM` class can be used to define a ROM model with the corresponding training data and GP model. The GP model is imported from the BoTorch package which contains GP models built using GPyTorch.  
+
 ```python
 import torch 
 from smt.sampling_methods import LHS
@@ -21,11 +26,11 @@ from botorch.models import KroneckerMultiTaskGP
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
 # Defining environment model function 
-problem = EnvModelFunction(input_dim = 15, output_dim = 1024)
+problem = EnvModelFunction(input_dim = 15, output_dim = 1024, normalized = True)
 
 # Creating the training data
 n_data = 50
-xlimits = np.array([[7.0,13.0], [0.02,0.12], [0.01,3.0], [30.010,30.295]])
+xlimits = np.array([[0.0, 1.0]]*problem.inputdim)
 sampler = LHS(xlimits=xlimits, criterion="ese")
 xtrain = sampler(n_data)
 xtrain = torch.tensor(xtrain, **tkwargs)
@@ -33,7 +38,7 @@ htrain = problem.evaluate(xtrain).flatten(1)
 
 # Generating the test data
 test_sampler = LHS(xlimits=xlimits, criterion="ese")
-xtest = test_sampler(25)
+xtest = test_sampler(10)
 xtest = torch.tensor(xtest, **tkwargs)
 htest = problem.evaluate(xtest).flatten(1)
 
