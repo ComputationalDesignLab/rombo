@@ -1,5 +1,5 @@
 import torch
-from ..interpolation.interpolation import GPRModel, BoTorchModel
+from ..interpolation.interpolation import BoTorchModel
 from ..dimensionality_reduction.dim_red import AutoencoderReduction
 from .baserom import ROM
 from botorch.models.transforms import Standardize

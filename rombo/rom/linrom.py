@@ -7,7 +7,7 @@ Current Implementation:
 
 """
 import torch
-from ..interpolation.interpolation import GPRModel, BoTorchModelList
+from ..interpolation.interpolation import BoTorchModelList
 from ..dimensionality_reduction.dim_red import LinearReduction
 from .baserom import ROM
 from botorch.models.transforms import Standardize
