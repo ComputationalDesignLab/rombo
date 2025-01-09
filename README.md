@@ -80,7 +80,7 @@ This will run the EMF case with the standard BO method and ROMBO method using a 
 
     python <example_script> -h
 
-> **_NOTE:_**  Running the airfoil test case requires installing the `blackbox <https://github.com/ComputationalDesignLab/blackbox>`_ package and its dependecies. This is because the computational fluid dynamics solver used in the airfoil case is implemented using that package. 
+> **_NOTE:_**  Running the airfoil test case requires installing the [blackbox](https://github.com/ComputationalDesignLab/blackbox) package and its dependecies. This is because the computational fluid dynamics solver used in the airfoil case is implemented using that package. 
 
 ## Cite this work!
 
