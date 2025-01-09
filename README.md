@@ -5,16 +5,16 @@
 </p>
 
 ROMBO is a optimization framework that utilizes a composite function formulation and nonlinear nonintrusive reduced order models. An autoencoder neural network is used to 
-project high dimensional outputs into a latent space. The latent space is modeled using multi-task Gaussian process models that utilize a Kronecker structure or intrinsic model coregionalization (ICM) formulation. The framework uses a Monte Carlo expected improvement infill strategy to balance exploration of the design space with exploitation of the objective function. A linear POD method is also implemented using the same structure as ROMBO but using POD for dimensionality reduction and independent GP models for the latent space. A standard BO implementation is also provided for generating comparison data for the ROMBO framework. The framework is built utilizing PyTorch and associated libraries such as GPyTorch and BoTorch. Modular base classes have been provided for users to implement their own ROM architectures and utilize them within this framework.
+project high dimensional outputs into a latent space. The latent space is modeled using multi-task Gaussian process models that utilize a Kronecker structure or intrinsic model coregionalization (ICM) formulation. The framework uses a Monte Carlo expected improvement infill strategy to balance exploration of the design space with exploitation of the objective function. A linear POD method is also implemented using the same structure as ROMBO but using POD for dimensionality reduction and independent GP models for the latent space. A standard BO implementation is also provided for generating comparison data for the ROMBO framework. The framework is built utilizing [PyTorch](https://pytorch.org/) and associated libraries such as [GPyTorch](https://gpytorch.ai/) and [BoTorch](https://botorch.org/). Modular base classes have been provided for users to implement their own ROM architectures and utilize them within this framework.
 
 ## Installation
 
 The ROMBO code can be installed in your Python environment using pip according to the following steps:
 
 - Clone or download the latest code from this repository. 
-- Open the terminal and ``cd`` into the root of cloned/downloaded repository
-- Activate the virtual environment and run: ``pip install .``
-- Alternatively, run the following to install the package in development mode: ``pip install -e .``
+- Open the terminal and ``cd`` into the root of cloned/downloaded repository.
+- Activate the virtual environment and run ``pip install .``
+- Alternatively, run : ``pip install -e .`` to install the package in development mode.
 
 ## Training a simple nonintrusive reduced order model using autoencoders and GP models
 
@@ -32,7 +32,7 @@ from botorch.models import KroneckerMultiTaskGP
 from gpytorch.mlls import ExactMarginalLogLikelihood
 ```
 
-A problem class is evaluated using one of the test problems defined in ROMBO.The SMT package is used to generate a latin hypercube sampling (LHS) plan 
+A problem class is evaluated using one of the test problems defined in ROMBO. The [SMT](https://github.com/SMTorg/smt) package is used to generate a latin hypercube sampling (LHS) plan 
 and the samples are evaluated using the evaluate method of the test problem class. A set of testing data is also generated in a similar manner. 
 
 ```python
@@ -54,7 +54,7 @@ xtest = torch.tensor(xtest, **tkwargs)
 htest = problem.evaluate(xtest).flatten(1)
 ```
 
-The autoencoder architecture is defined using `MLPAutoEnc` which is a simple fully-connected autoencoder network defined in ROMBO. A user may also define their own architecture using PyTorch and use it along with the ROM model class within the ROMBO framework. After defining the autoencoder, the `AUTOENCROM` class can be used to define a ROM model with the corresponding training data and GP model. The GP model, `KroneckerMultiTaskGP`, and the corresponding likelihood functio, `ExactMarginalLogLikelihood`, are imported from the BoTorch package which contains GP models built using GPyTorch. The `AUTOENCROM` module combines the various inputs and automates the process of setting up the rom model.  
+The autoencoder architecture is defined using `MLPAutoEnc` which is a simple fully-connected autoencoder network defined in ROMBO. A user may also define their own architecture using PyTorch and use it along with the ROM model class within the ROMBO framework. After defining the autoencoder, the `AUTOENCROM` class can be used to define a ROM model with the corresponding training data and GP model. The GP model, `KroneckerMultiTaskGP`, and the corresponding likelihood functio, `ExactMarginalLogLikelihood`, are imported from the [BoTorch](https://botorch.org/) package which contains GP models built using [GPyTorch](https://gpytorch.ai/). The `AUTOENCROM` module combines the various inputs and automates the process of setting up the rom model.  
 
 ```python
 # Generating the nonlinear ROM model
