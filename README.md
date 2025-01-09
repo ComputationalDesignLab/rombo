@@ -13,10 +13,8 @@ The ROMBO code can be installed in your Python environment using pip according t
 
 - Clone or download the latest code from this repository. 
 - Open the terminal and ``cd`` into the root of cloned/downloaded repository
-- Activate the virtual environment and run:
-    pip install .
-- Alternatively, run the following to install the package in development mode:
-    pip install -e .
+- Activate the virtual environment and run: ``pip install .``
+- Alternatively, run the following to install the package in development mode: ``pip install -e .``
 
 ## Training a simple nonintrusive reduced order model using autoencoders and GP models
 
@@ -74,7 +72,7 @@ field = rom.predictROM(xtest)
 
 ## Running the example optimization cases for the ROMBO framework
 
-The `examples` folder contains the test cases that were used to characterize the ROMBO framework. Each of the scripts included in the folder also serve as an example of how to use the ROMBO framework to perform optimization. Running the example files as is will reproduce results that are similar to the ones included in the publication for the ROMBO framework. For example, to run the example that utilizes BO and ROMBO for optimizing the Environment Model Function (EMF), ``cd`` into the examples/env_model_function folder and run the following from the terminal::
+The `examples` folder contains the test cases that were used to characterize the ROMBO framework. Each of the scripts included in the folder also serve as an example of how to use the ROMBO framework to perform optimization. Running the example files as is will reproduce results that are similar to the ones included in the publication for the ROMBO framework. For example, to run the example that utilizes BO and ROMBO for optimizing the Environment Model Function (EMF), ``cd`` into the examples/env_model_function folder and run the following from the terminal:
 
     python env_model_function_bo.py --input_dim 15 --output_dim 1024 --latent_dim 10 --mc_samples 32 --trial_num 1
 
@@ -82,4 +80,12 @@ This will run the EMF case with the standard BO method and ROMBO method using a 
 
     python <example_script> -h
 
+> **_NOTE:_**  Running the airfoil test case requires installing the `blackbox <https://github.com/ComputationalDesignLab/blackbox>`_ package and its dependecies. This is because the computational fluid dynamics solver used in the airfoil case is implemented using that package. 
+
+## Cite this work!
+
+If this framework proves useful for your own work, please cite the following paper
+
+
+We welcome collaboration on further development of this framework, both theoretically and from a codebase perspective. 
 
