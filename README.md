@@ -7,7 +7,20 @@
 ROMBO is a optimization framework that utilizes a composite function formulation and nonlinear nonintrusive reduced order models. An autoencoder neural network is used to 
 project high dimensional outputs into a latent space. The latent space is modeled using multi-task Gaussian process models that utilize a Kronecker structure or intrinsic model coregionalization (ICM) formulation. The framework uses a Monte Carlo expected improvement infill strategy to balance exploration of the design space with exploitation of the objective function. A linear POD method is also implemented using the same structure as ROMBO but using POD for dimensionality reduction and independent GP models for the latent space. A standard BO implementation is also provided for generating comparison data for the ROMBO framework. The framework is built utilizing PyTorch and associated libraries such as GPyTorch and BoTorch. Modular base classes have been provided for users to implement their own ROM architectures and utilize them within this framework.
 
-### Training a simple nonintrusive reduced order model using autoencoders and GP models
+## Installation
+
+The ROMBO code can be installed in your Python environment using pip according to the following steps:
+
+- Clone or download the latest code from this repository. 
+- Open the terminal and ``cd`` into the root of cloned/downloaded repository
+- Activate the virtual environment and run::
+
+    pip install .
+- Alternatively, run the following to install the package in development mode::
+
+    pip install -e .
+
+## Training a simple nonintrusive reduced order model using autoencoders and GP models
 
 The following example code demonstrates how the ROMBO framework modules can be used to define a deep learning ROM model and train it to predict the environment model function using
 the corresponding test problem class. First, the relevant modules must be imported from ROMBO and other Python packages. 
@@ -61,3 +74,12 @@ rom.trainROM(verbose=False)
 field = rom.predictROM(xtest)
 ```
 
+## Running the example optimization cases for the ROMBO framework
+
+The `examples` folder contains the test cases that were used to characterize the ROMBO framework. Each of the scripts included in the folder also serve as an example of how to use the ROMBO framework to perform optimization. Running the example files as is will reproduce results that are similar to the ones included in the publication for the ROMBO framework. For example, to run the example that utilizes BO and ROMBO for optimizing the Environment Model Function (EMF), ``cd`` into the examples folder and run the following from the terminal::
+
+    python env_model_function_bo.py --input_dim 15 --output_dim 1024 --latent_dim 10 --mc_samples 32 --trial_num 1
+
+This will run the EMF case with the standard BO method and ROMBO method using a latent dimension of 10 and 32 Monte Carlo samples. The options entered in the terminal can be changed to run different trials and variants of the test cases. Other test cases can be run in a similar manner. To find out more about the options for each test case, simply type the following in the terminal after entering the examples folder.  
+
+    python <example_script> -h
