@@ -14,7 +14,7 @@ The ROMBO code can be installed in your Python environment using pip according t
 - Clone or download the latest code from this repository. 
 - Open the terminal and ``cd`` into the root of cloned/downloaded repository.
 - Activate the virtual environment and run ``pip install .``
-- Alternatively, run : ``pip install -e .`` to install the package in development mode.
+- Alternatively, run ``pip install -e .`` to install the package in development mode.
 
 ## Training a simple nonintrusive reduced order model using autoencoders and GP models
 
@@ -54,7 +54,7 @@ xtest = torch.tensor(xtest, **tkwargs)
 htest = problem.evaluate(xtest).flatten(1)
 ```
 
-The autoencoder architecture is defined using `MLPAutoEnc` which is a simple fully-connected autoencoder network defined in ROMBO. A user may also define their own architecture using PyTorch and use it along with the ROM model class within the ROMBO framework. After defining the autoencoder, the `AUTOENCROM` class can be used to define a ROM model with the corresponding training data and GP model. The GP model, `KroneckerMultiTaskGP`, and the corresponding likelihood functio, `ExactMarginalLogLikelihood`, are imported from the [BoTorch](https://botorch.org/) package which contains GP models built using [GPyTorch](https://gpytorch.ai/). The `AUTOENCROM` module combines the various inputs and automates the process of setting up the rom model.  
+The autoencoder architecture is defined using `MLPAutoEnc` which is a simple fully-connected autoencoder network defined in ROMBO. A user may also define their own architecture using [PyTorch](https://pytorch.org/) and use it along with the ROM model class within the ROMBO framework. After defining the autoencoder, the `AUTOENCROM` class can be used to define a ROM model with the corresponding training data and GP model. The GP model, `KroneckerMultiTaskGP`, and the corresponding likelihood function `ExactMarginalLogLikelihood`, are imported from the [BoTorch](https://botorch.org/) package which contains GP models built using [GPyTorch](https://gpytorch.ai/). The `AUTOENCROM` module combines the various inputs and automates the process of setting up the rom model.  
 
 ```python
 # Generating the nonlinear ROM model
@@ -68,6 +68,74 @@ The ROM that is generated can be trained on the training data using the `trainRO
 # Training the ROM and predicting on the test data
 rom.trainROM(verbose=False)
 field = rom.predictROM(xtest)
+```
+
+## Creating and running an optimization loop using ROMBO
+
+To create an optimization loop using the ROMBO framework, start by importing the necessary modules and libraries into the script.
+
+```python
+# Importing standard libraries
+import torch 
+from smt.sampling_methods import LHS
+from rombo.rom.nonlinrom import AUTOENCROM
+import numpy as np
+from rombo.dimensionality_reduction.autoencoder import MLPAutoEnc
+from rombo.test_problems.test_problems import EnvModelFunction
+from rombo.optimization.rombo import ROMBO
+
+# Importing relevant classes from BoTorch
+from botorch.acquisition import qExpectedImprovement, qLogExpectedImprovement
+from botorch.models import KroneckerMultiTaskGP, SingleTaskGP
+from gpytorch.mlls import ExactMarginalLogLikelihood
+
+tkwargs = {"device": torch.device("cpu") if not torch.cuda.is_available() else torch.device("cuda:0"), "dtype": torch.float64}
+```
+
+Once the necessary modules have been imported, the first step is to instantiate the problem class that the optimization loop is being created for. Here, we use the Environment Model Function class that has already been defined in ROMBO. If a user would like to use ROMBO with a different test problem, it will be necessary to define a problem class which can be done following the code in the `test_problems` folder. Some optimization parameters have also been defined along with the problem instance. It is also assumed that the design variables of the problem have been normalized to the range of 0 to 1. 
+
+```python
+# Instantiating the problem and defining optimization parameters
+inputdim = 15
+outputdim = 1024
+xlimits = np.array([[0.0, 1.0]]*inputdim)
+n_init = 10
+objective = EnvModelFunction(input_dim=inputdim, output_dim=outputdim, normalized=True)
+bounds = torch.cat((torch.zeros(1, inputdim), torch.ones(1, inputdim))).to(**tkwargs)
+n_trials = 1
+n_iterations = 40
+```
+The next step is to generate the initial data for the optimization using an LHS sampling plan. 
+
+```python
+# Generating the initial sample for the trial
+sampler = LHS(xlimits=xlimits, criterion="ese", random_state=args.trial_num)
+xdoe = sampler(n_init)
+xdoe = torch.tensor(xdoe, **tkwargs)
+ydoe = objective.evaluate(xdoe)
+ydoe = ydoe.reshape((ydoe.shape[0], objective.output_dim))
+```
+After generating the data, we will define the ROM architecture and instantiate the ROMBO optimizer. The `ROMBO` class must be instatitated with the initial data, number of Monte Carlo samples, bounds of the problem, problem class (`MCObjective`), acquisition function and the chosen ROM architecture. 
+
+```python
+autoencoder = MLPAutoEnc(high_dim=ydoe.shape[-1], hidden_dims=[256,64], zd = args.latent_dim, activation = torch.nn.SiLU())
+autoencoder.double()
+rom_args = {"autoencoder": autoencoder, "low_dim_model": KroneckerMultiTaskGP, "low_dim_likelihood": ExactMarginalLogLikelihood,
+            "standard": False, "saas": False}
+optim_args = {"q": 1, "num_restarts": 25, "raw_samples": 512}
+optimizer1 = ROMBO(init_x=xdoe, init_y=ydoe, num_samples=32, bounds = bounds, MCObjective=objective, acquisition=qLogExpectedImprovement, ROM=AUTOENCROM, ROM_ARGS=rom_args) 
+```
+Once the `ROMBO` optimizer is initialized, one step of the optimization can simply be done using the `do_one_step` method shown below. The method requires a `tag` which is just a string to label the optimizer while logging the results and `tkwargs` which are the multi-start gradient-based optimization options used while optimizing the acquisition function. This method will train the ROM model, generate the acquisition function, optimize the acquisition function and update the sampling plan provided to the `ROMBO` class with the new infill point. The latest sampling plan of the optimizer can be accesses using `optimizer1.xdoe` and `optimizer1.ydoe`.
+
+```python
+optimizer1.do_one_step(tag = 'ROMBO + Log EI', tkwargs=optim_args)
+```
+
+If the optimization must be run in a loop for a certain number of iterations, this can be done by including the `do_one_step` method in a simple for loop.
+
+```python
+for i in range(n_iterations):
+    optimizer1.do_one_step(tag = 'ROMBO + Log EI', tkwargs=optim_args)
 ```
 
 ## Running the example optimization cases for the ROMBO framework

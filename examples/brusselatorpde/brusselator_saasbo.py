@@ -31,8 +31,8 @@ args = parser.parse_args()
 # Instantiating the problem and setting the optimization parameters
 inputdim = args.input_dim
 xlimits = np.array([[0.0, 1.0]]*inputdim)
-n_init = 15
-objective = BrusselatorPDE(input_dim=inputdim, Nx=64, Ny=64, tkwargs=tkwargs)
+n_init = 5
+objective = BrusselatorPDE(input_dim=inputdim, Nx=64, Ny=64)
 bounds = torch.cat((torch.zeros(1, inputdim), torch.ones(1, inputdim))).to(**tkwargs)
 n_trials = 1
 n_iterations = 25

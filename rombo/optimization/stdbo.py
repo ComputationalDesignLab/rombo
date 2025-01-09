@@ -47,7 +47,7 @@ class BO(BaseBO):
         acqf = self.setacquisition(model=gp_model.model, sampler=sampler, best_f=self.best_f, objective_required = False)
 
         # Optimizing the acquisition function to obtain a new point
-        new_x, _ = self.optimize_acquistion_torch(acqf, self.bounds, tkwargs)
+        new_x, self.maxEI = self.optimize_acquistion_torch(acqf, self.bounds, tkwargs)
 
         if self.training == 'bayesian':
             self.lengthscales = gp_model.model.median_lengthscale.detach().cpu().numpy()

@@ -32,10 +32,10 @@ class EnvModelFunction(TestFunction):
                 output_dim & (output_dim - 1) == 0
             ), "Output dim must either be 12 or a power of 2"
 
-        M0 = torch.tensor(10.0).float()
-        D0 = torch.tensor(0.07).float()
-        L0 = torch.tensor(1.505).float()
-        tau0 = torch.tensor(30.1525).float()
+        M0 = torch.tensor(10.0, **tkwargs)
+        D0 = torch.tensor(0.07, **tkwargs)
+        L0 = torch.tensor(1.505, **tkwargs)
+        tau0 = torch.tensor(30.1525, **tkwargs)
         if output_dim == 12:
             self.s_size = 3
             self.t_size = 4
@@ -46,13 +46,13 @@ class EnvModelFunction(TestFunction):
             # Make sure output dim is indeed a power of 2
             assert output_dim == self.s_size * self.t_size
         if self.s_size == 3:
-            S = torch.tensor([0.0, 1.0, 2.5]).float()
+            S = torch.tensor([0.0, 1.0, 2.5], **tkwargs)
         else:
-            S = torch.linspace(0.0, 2.5, self.s_size).float()
+            S = torch.linspace(0.0, 2.5, self.s_size, **tkwargs)
         if self.t_size == 4:
-            T = torch.tensor([15.0, 30.0, 45.0, 60.0]).float()
+            T = torch.tensor([15.0, 30.0, 45.0, 60.0], **tkwargs)
         else:
-            T = torch.linspace(15.0, 60.0, self.t_size).float()
+            T = torch.linspace(15.0, 60.0, self.t_size, **tkwargs)
 
         self.Sgrid, self.Tgrid = torch.meshgrid(S, T)
         self.c_true = self.env_cfun(self.Sgrid, self.Tgrid, M0, D0, L0, tau0)
@@ -146,7 +146,7 @@ class EnvModelFunction(TestFunction):
 
 class BrusselatorPDE(TestFunction):
 
-    def __init__(self, Nx, Ny, input_dim, tkwargs, normalized = True):
+    def __init__(self, Nx, Ny, input_dim, normalized = True):
 
         self.normalized = normalized
         # Setting the paramters for the grid of the PDE
@@ -158,8 +158,6 @@ class BrusselatorPDE(TestFunction):
 
         self.input_dim = input_dim
         self.output_dim = 2*self.Nx*self.Ny
-
-        self.tkwargs = tkwargs
 
     def function(self, x):
 
@@ -203,13 +201,13 @@ class BrusselatorPDE(TestFunction):
         ss = sol_tensor[np.isnan(sol_tensor)]
         sol_tensor[np.isnan(sol_tensor)] = 1e5 * np.random.randn(*ss.shape)
         
-        return torch.tensor(sol_tensor, **self.tkwargs)
+        return torch.tensor(sol_tensor, **tkwargs)
     
     def evaluate(self, X):
         return torch.stack([self.function(x) for x in X])
 
     def score(self, y):
-        weighting = torch.ones((2,self.Nx,self.Ny))/10
+        weighting = torch.ones((2,self.Nx,self.Ny), **tkwargs)/10
         weighting[:, [0, 1, -2, -1], :] = 1.0
         weighting[:, :, [0, 1, -2, -1]] = 1.0
         weighted_samples = weighting * y

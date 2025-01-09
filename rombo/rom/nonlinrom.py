@@ -4,6 +4,8 @@ from ..dimensionality_reduction.dim_red import AutoencoderReduction
 from .baserom import ROM
 from botorch.models.transforms import Standardize
 
+tkwargs = {"device": torch.device("cpu") if not torch.cuda.is_available() else torch.device("cuda:0"), "dtype": torch.float64}
+
 class AUTOENCROM(ROM):
 
     def __init__(self, param_doe, snapshot_matrix, autoencoder, low_dim_model, low_dim_likelihood, supervised = False, standard = True, saas = False):
@@ -45,7 +47,7 @@ class AUTOENCROM(ROM):
         if self.saas:
             I = []
             for i in range(a.shape[-1]):
-                I.append(i*torch.ones((len(train_x), 1)))
+                I.append(i*torch.ones((len(train_x), 1), **tkwargs))
             train_X = torch.cat([torch.cat([train_x, i], -1) for i in I])
             train_Y = a.T.detach().flatten(0).reshape((len(train_X), 1))
 
