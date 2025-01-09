@@ -102,14 +102,13 @@ xlimits = np.array([[0.0, 1.0]]*inputdim)
 n_init = 10
 objective = EnvModelFunction(input_dim=inputdim, output_dim=outputdim, normalized=True)
 bounds = torch.cat((torch.zeros(1, inputdim), torch.ones(1, inputdim))).to(**tkwargs)
-n_trials = 1
-n_iterations = 40
+n_iterations = 2
 ```
 The next step is to generate the initial data for the optimization using an LHS sampling plan. 
 
 ```python
 # Generating the initial sample for the trial
-sampler = LHS(xlimits=xlimits, criterion="ese", random_state=args.trial_num)
+sampler = LHS(xlimits=xlimits, criterion="ese")
 xdoe = sampler(n_init)
 xdoe = torch.tensor(xdoe, **tkwargs)
 ydoe = objective.evaluate(xdoe)
@@ -118,7 +117,7 @@ ydoe = ydoe.reshape((ydoe.shape[0], objective.output_dim))
 After generating the data, we will define the ROM architecture and instantiate the ROMBO optimizer. The `ROMBO` class must be instatitated with the initial data, number of Monte Carlo samples, bounds of the problem, problem class (`MCObjective`), acquisition function and the chosen ROM architecture. 
 
 ```python
-autoencoder = MLPAutoEnc(high_dim=ydoe.shape[-1], hidden_dims=[256,64], zd = args.latent_dim, activation = torch.nn.SiLU())
+autoencoder = MLPAutoEnc(high_dim=ydoe.shape[-1], hidden_dims=[256,64], zd = 10, activation = torch.nn.SiLU())
 autoencoder.double()
 rom_args = {"autoencoder": autoencoder, "low_dim_model": KroneckerMultiTaskGP, "low_dim_likelihood": ExactMarginalLogLikelihood,
             "standard": False, "saas": False}
