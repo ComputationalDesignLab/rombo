@@ -5,7 +5,7 @@
 </p>
 
 ROMBO is a optimization framework that utilizes a composite function formulation and nonlinear nonintrusive reduced order models. An autoencoder neural network is used to 
-project high dimensional outputs into a latent space. The latent space is modeled using multi-task Gaussian process models that utilize a Kronecker structure or intrinsic model coregionalization (ICM) formulation. The framework uses a Monte Carlo expected improvement infill strategy to balance exploration of the design space with exploitation of the objective function. A linear POD method is also implemented using the same structure as ROMBO but using POD for dimensionality reduction and independent GP models for the latent space. A standard BO implementation is also provided for generating comparison data for the ROMBO framework. The framework is built utilizing [PyTorch](https://pytorch.org/) and associated libraries such as [GPyTorch](https://gpytorch.ai/) and [BoTorch](https://botorch.org/). Modular base classes have been provided for users to implement their own ROM architectures and utilize them within this framework.
+project high dimensional outputs into a latent space. The latent space is modeled using multi-task Gaussian process (GP) models that utilize a Kronecker structure or intrinsic model coregionalization (ICM) formulation. The framework uses a Monte Carlo expected improvement infill strategy to balance exploration of the design space with exploitation of the objective function. A linear POD method is also implemented using the same structure as ROMBO but using POD for dimensionality reduction and independent GP models for the latent space. A standard BO implementation is also provided for generating comparison data for the ROMBO framework. The framework is built utilizing [PyTorch](https://pytorch.org/) and associated libraries such as [GPyTorch](https://gpytorch.ai/) and [BoTorch](https://botorch.org/). Modular base classes have been provided for users to implement their own ROM architectures and utilize them within this framework.
 
 ## Installation
 
@@ -146,7 +146,7 @@ The `examples` folder contains the test cases that were used to characterize the
 
 This will run the EMF case with the standard BO method and ROMBO method using a latent dimension of 10 and 32 Monte Carlo samples. The options entered in the terminal can be changed to run different trials and variants of the test cases. Other test cases can be run in a similar manner. To find out more about the options for each test case, simply type the following in the terminal after entering the relevant examples folder and replacing `example_script` with the name of any of the scripts present in the folder.  
 
-    python <example_script> -h
+    python example_script -h
 
 > **_NOTE:_**  Running the airfoil test case requires installing the [blackbox](https://github.com/ComputationalDesignLab/blackbox) package and its dependecies. This is because the computational fluid dynamics solver used in the airfoil case is implemented using that package. 
 
