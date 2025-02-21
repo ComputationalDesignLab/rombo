@@ -1,3 +1,13 @@
+# Some of the code used in this test problems script has been adapted from the GitHub repositories of the following research papers
+
+# 1. N. Maus, Z. J. Lin, M. Balandat, E. Bakshy, Joint composite latent
+# space bayesian optimization, in: Forty-first International Conference
+# on Machine Learning, Vienna, Austria, 21-27 July, 2024. Code : https://github.com/nataliemaus/joco_icml24
+
+# 2. M. A. Bhouri, M. Joly, R. Yu, S. Sarkar, P. Perdikaris, Scalable bayesian optimization with randomized prior networks, 
+# Computer Methods in Applied Mechanics and Engineering 417 (12 2023).
+# doi:10.1016/j.cma.2023.116428. Code: https://github.com/bhouri0412/rpn_bo
+
 from .baseproblem import TestFunction
 import os
 import torch
