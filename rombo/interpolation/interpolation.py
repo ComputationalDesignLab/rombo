@@ -1,4 +1,5 @@
-# Some code has been adapted from the BoTorch code and tutorials - https://botorch.org/ 
+# Some of the code in this script has been adapted from the BoTorch code and tutorials
+# https://botorch.org/docs/tutorials/, https://botorch.readthedocs.io/en/stable/
 
 # Importing relevant libraries
 import torch
