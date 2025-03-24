@@ -1,3 +1,5 @@
+# Some code has been adapted from the BoTorch code and tutorials - https://botorch.org/ 
+
 # Importing relevant libraries
 import torch
 import gpytorch
