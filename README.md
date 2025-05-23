@@ -11,9 +11,9 @@ project high dimensional outputs into a latent space. The latent space is modele
 
 The ROMBO code can be installed in your Python environment using pip according to the following steps:
 
-- Clone or download the latest code from this repository. 
-- Open the terminal and ``cd`` into the root of cloned/downloaded repository.
-- Activate the virtual environment and run ``pip install .``
+- Clone or download the latest version of this repository. 
+- After opening a new terminal, change the directory to the cloned or downloaded repository using ``cd``.
+- Start your existing Python environment or create a new environment and use ``pip install .`` to install the package. 
 - Alternatively, run ``pip install -e .`` to install the package in development mode.
 
 ## Training a simple nonintrusive reduced order model using autoencoders and GP models
