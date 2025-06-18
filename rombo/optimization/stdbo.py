@@ -14,7 +14,7 @@ tkwargs = {
 
 class BO(BaseBO):
 
-    "Class definition for BayesOpt - this can be used to perform Bayesian optimization using single GP models"
+    "Class definition for standard BO - this can be used to perform Bayesian optimization using single GP models"
 
     def __init__(self, init_x, init_y, num_samples, MCObjective, bounds, acquisition, GP, MLL, GP_ARGS = {}, training = 'mll'):
 
@@ -40,7 +40,7 @@ class BO(BaseBO):
         if self.training == 'bayesian':
             self.gp_args = {"outcome_transform": Standardize(self.ydoe.shape[-1])}
         gp_model = BoTorchModel(self.gp, self.mll, self.xdoe, self.ydoe, model_args=self.gp_args)
-        gp_model.train(type=self.training)
+        gp_model.training(type=self.training)
 
         # Creating the acquisition function
         sampler = SobolQMCNormalSampler(sample_shape=torch.Size([self.num_samples]))
@@ -66,4 +66,16 @@ class BO(BaseBO):
 
             print("\n\n##### Running iteration {} out of {} #####".format(iteration+1, n_iterations))
             self.do_one_step(tag, tkwargs)
+
+class DKLBO(BaseBO):
+
+    def __init__(self, init_x, init_y, num_samples, MCObjective, bounds, acquisition, GP, MLL, GP_ARGS = {}, training = 'mll'):
+
+        self.xdoe = self._checkTensor(init_x)
+        self.ydoe = self._checkTensor(init_y)
+        self.bounds = bounds
+        self.num_samples = num_samples
+        self.acquisition = acquisition
+        self.MCObjective = MCObjective
+
 
