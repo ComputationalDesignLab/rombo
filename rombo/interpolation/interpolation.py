@@ -156,7 +156,7 @@ class BoTorchModelList(MLModel):
 class DeepKernelGP(gpytorch.models.ExactGP, MLModel):
 
     # Need to standardize the output data and add in that capability
-    def __init__(self, train_x, train_y, hidden_dims, zd=2,activation=nn.SiLU()):
+    def __init__(self, train_x, train_y, hidden_dims, zd=2, activation=nn.SiLU()):
 
         # Specifying the likelihood as the Gaussian likelihood
         super(DeepKernelGP, self).__init__(train_x, train_y, gpytorch.likelihoods.GaussianLikelihood())

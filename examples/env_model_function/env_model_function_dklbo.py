@@ -13,7 +13,6 @@ warnings.filterwarnings('ignore')
 
 # Importing relevant classes from BoTorch
 from botorch.acquisition import qExpectedImprovement, qLogExpectedImprovement
-from gpytorch.mlls import ExactMarginalLogLikelihood
 
 tkwargs = {"device": torch.device("cpu") if not torch.cuda.is_available() else torch.device("cuda:0"), "dtype": torch.float64}
 
@@ -21,7 +20,7 @@ tkwargs = {"device": torch.device("cpu") if not torch.cuda.is_available() else t
 parser = argparse.ArgumentParser()
 parser.add_argument("--input_dim", help="input dimension of the function", type=int)
 parser.add_argument("--output_dim", help="output dimension of the function", type=int)
-parser.add_argument("--latent_dim", help="latent dimension of the model", type=int)
+parser.add_argument("--latent_dim", help="latent dimension of the deep kernel", type=int)
 parser.add_argument("--mc_samples", help="number of MC samples", type=int)
 parser.add_argument("--trial_num", help="number of the trial of the program",type=int)
 args = parser.parse_args()
@@ -73,7 +72,12 @@ for trial in range(n_trials):
     ydoe = ydoe.reshape((ydoe.shape[0], objective.output_dim))
 
     # Calculating initial scores for standard BO procedure
-    score_doe = objective.utility(ydoe)
+    score_doe = -objective.utility(ydoe)
+
+    # Standardize the outcome data
+    mean_score = torch.mean(score_doe)
+    std_score = torch.std(score_doe)
+    standardized_doe = (score_doe - mean_score) / std_score
 
     # Definition the BO optimizers
     optim_args = {"q": 1, "num_restarts": 25, "raw_samples": 512}
