@@ -27,6 +27,8 @@ class LangermannFunction(TestFunction):
         self.normalized = normalized
         self.input_dim = input_dim
         self.output_dim = output_dim
+        self.lower_bounds = [0.0]*input_dim
+        self.upper_bounds = [10.0]*input_dim
 
         self.A = torch.tensor([[3, 5, 2, 1, 7], [5, 2, 1, 4, 9]]) # Original A matrix for Langermann function
         self.A = self.A.repeat(input_dim // 2, output_dim // 5)  # Need to repeat for high-dimensional modification
@@ -34,24 +36,23 @@ class LangermannFunction(TestFunction):
         self.c = self.c.repeat(output_dim // 5,) # Need to repeat foor high-dimensional modification
 
     def function(self, x):
-
         if self.normalized:
             xnew = x.clone()
-            xnew[i] = (xnew[i] * (self.upper_bounds[i] - self.lower_bounds[i])) + self.lower_bounds[i]
+            for i in range(len(xnew)):
+                xnew[i] = (xnew[i] * (self.upper_bounds[i] - self.lower_bounds[i])) + self.lower_bounds[i]
         else:
             xnew = x
 
         x_repeats = torch.cat([xnew.reshape(self.input_dim, 1)] * self.output_dim, -1)
         fo = ((x_repeats - self.A) ** 2).sum(0)
-
         return fo
 
     def evaluate(self, X):
         return torch.stack([self.function(x) for x in X])
 
     def utility(self, y):
-        reward = self.c * torch.exp((-1 * y) / self.pi) * torch.cos(self.pi * y)
-        return reward.sum()
+        reward = self.c * torch.exp((-1 * y) / math.pi) * torch.cos(math.pi * y)
+        return reward.sum(dim=-1,keepdim=True)
 
 class EnvModelFunction(TestFunction):
 
