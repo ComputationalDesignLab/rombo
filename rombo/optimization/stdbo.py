@@ -1,10 +1,9 @@
 import torch
-import numpy as np
-from functools import reduce
+import torch.nn as nn
 from botorch.sampling import SobolQMCNormalSampler
 from botorch.models.transforms import Standardize
 from .basebo import BaseBO
-from ..interpolation.interpolation import BoTorchModel
+from ..interpolation.interpolation import BoTorchModel, DeepKernelGP
 
 # Setting data type and device for Pytorch based libraries
 tkwargs = {
@@ -69,7 +68,7 @@ class BO(BaseBO):
 
 class DKLBO(BaseBO):
 
-    def __init__(self, init_x, init_y, num_samples, MCObjective, bounds, acquisition, GP, MLL, GP_ARGS = {}, training = 'mll'):
+    def __init__(self, init_x, init_y, num_samples, MCObjective, bounds, acquisition, hidden_dims, latent_dim):
 
         self.xdoe = self._checkTensor(init_x)
         self.ydoe = self._checkTensor(init_y)
@@ -77,5 +76,40 @@ class DKLBO(BaseBO):
         self.num_samples = num_samples
         self.acquisition = acquisition
         self.MCObjective = MCObjective
+        self.hidden_dims = hidden_dims
+        self.latent_dim = latent_dim
+
+    def do_one_step(self, tag, tkwargs):
+
+        self.best_f = self.ydoe.max().item()
+        self.best_x = self.ydoe.argmax().item()
+        print("\nBest Objective Value for {}:".format(tag), self.best_f)
+        print("Best Design for {}:".format(tag), self.xdoe[self.best_x])
+        
+        # Training the GP model
+        gp_model = DeepKernelGP(self.xdoe, self.ydoe, self.hidden_dims, zd=self.latent_dim, activation=nn.SiLU())
+        gp_model.training()
+
+        # Creating the acquisition function
+        sampler = SobolQMCNormalSampler(sample_shape=torch.Size([self.num_samples]))
+        acqf = self.setacquisition(model=gp_model, sampler=sampler, best_f=self.best_f, objective_required = False)
+
+        # Optimizing the acquisition function to obtain a new point
+        new_x, self.maxEI = self.optimize_acquistion_torch(acqf, self.bounds, tkwargs)
+
+        # Add in new data to the existing dataset
+        for x in new_x:
+            self.xdoe = torch.cat((self.xdoe, x.unsqueeze(0)), dim = 0)
+            new_y = self.MCObjective.function(x)
+            new_score = self.MCObjective.utility(new_y)
+            self.ydoe = torch.cat((self.ydoe, new_score.reshape((1,self.ydoe.shape[-1]))), dim = 0)
+
+    "Method to run the optimization in a loop"
+    def optimize(self, tag, n_iterations, tkwargs):
+
+        for iteration in range(n_iterations):
+
+            print("\n\n##### Running iteration {} out of {} #####".format(iteration+1, n_iterations))
+            self.do_one_step(tag, tkwargs)
 
 
