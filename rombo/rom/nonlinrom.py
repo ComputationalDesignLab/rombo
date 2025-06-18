@@ -53,11 +53,11 @@ class AUTOENCROM(ROM):
 
             # Training GPR model
             self.gp_model = BoTorchModel(self.low_dim_model, self.low_dim_likelihood, train_X, train_Y, model_args={"task_feature": -1, "outcome_transform": Standardize(train_Y.shape[-1])})
-            self.gp_model.training(type='bayesian')
+            self.gp_model.trainModel(type='bayesian')
         else:
             # Training GPR model
             self.gp_model = BoTorchModel(self.low_dim_model, self.low_dim_likelihood, train_x, a.detach(), model_args={"outcome_transform": Standardize(a.detach().shape[-1])})
-            self.gp_model.training()
+            self.gp_model.trainModel()
 
     "Method to predict using the trained ROM for a given test data"
     def predictROM(self, test_x):

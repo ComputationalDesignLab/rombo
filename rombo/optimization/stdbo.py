@@ -39,7 +39,7 @@ class BO(BaseBO):
         if self.training == 'bayesian':
             self.gp_args = {"outcome_transform": Standardize(self.ydoe.shape[-1])}
         gp_model = BoTorchModel(self.gp, self.mll, self.xdoe, self.ydoe, model_args=self.gp_args)
-        gp_model.training(type=self.training)
+        gp_model.trainModel(type=self.training)
 
         # Creating the acquisition function
         sampler = SobolQMCNormalSampler(sample_shape=torch.Size([self.num_samples]))
@@ -88,7 +88,7 @@ class DKLBO(BaseBO):
         
         # Training the GP model
         gp_model = DeepKernelGP(self.xdoe, self.ydoe, self.hidden_dims, zd=self.latent_dim, activation=nn.SiLU())
-        gp_model.training()
+        gp_model.trainModel()
 
         # Creating the acquisition function
         sampler = SobolQMCNormalSampler(sample_shape=torch.Size([self.num_samples]))
@@ -102,7 +102,7 @@ class DKLBO(BaseBO):
             self.xdoe = torch.cat((self.xdoe, x.unsqueeze(0)), dim = 0)
             new_y = self.MCObjective.function(x)
             new_score = self.MCObjective.utility(new_y)
-            self.ydoe = torch.cat((self.ydoe, new_score.reshape((1,self.ydoe.shape[-1]))), dim = 0)
+            self.ydoe = torch.cat((self.ydoe, new_score.unsqueeze(0)))
 
     "Method to run the optimization in a loop"
     def optimize(self, tag, n_iterations, tkwargs):

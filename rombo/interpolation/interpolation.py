@@ -32,7 +32,7 @@ class MLModel(ABC):
 
     "Method to train the ML model for the low dimensional space"
     @abstractmethod
-    def training(self):
+    def trainModel(self):
         pass
 
     "Method to predict the low dimensional space using the ML model"
@@ -59,7 +59,7 @@ class BoTorchModel(MLModel):
         self.model_args = model_args
     
     "Method to train the BoTorch model - this requires significantly less inputs because of preprocessing done by BoTorch"
-    def training(self, type = 'mll'):
+    def trainModel(self, type = 'mll'):
 
         # Instantiate the model
         gp = self.model(self.train_x, self.train_y.to(**tkwargs), **self.model_args)
@@ -114,7 +114,7 @@ class BoTorchModelList(MLModel):
         self.model_args = model_args
     
     "Method to train the BoTorch model - this requires significantly less inputs because of preprocessing done by BoTorch"
-    def training(self):
+    def trainModel(self):
         models = []
         for i in range(self.train_y.shape[-1]):
             train_Y = self.train_y[..., i : i + 1]
@@ -159,13 +159,13 @@ class DeepKernelGP(gpytorch.models.ExactGP, MLModel):
     def __init__(self, train_x, train_y, hidden_dims, zd=2,activation=nn.SiLU()):
 
         # Specifying the likelihood as the Gaussian likelihood
-        self.likelihood = gpytorch.likelihoods.GaussianLikelihood()
-        super(DeepKernelGP, self).__init__(train_x, train_y, self.likelihood)
+        super(DeepKernelGP, self).__init__(train_x, train_y, gpytorch.likelihoods.GaussianLikelihood())
         self._settraindata(train_x, train_y)
         
         # Setting the mean and kernel function for the GP model
         self.mean_module = gpytorch.means.ConstantMean()
         self.covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel())
+        self.num_outputs = 1
 
         # Setting up the feature extractor
         encoder_layers = []
@@ -191,12 +191,12 @@ class DeepKernelGP(gpytorch.models.ExactGP, MLModel):
         self.eval()
         self.likelihood.eval()
         dist = self.likelihood(self(X))
-        return GPyTorchPosterior(mvn=dist)
+        return GPyTorchPosterior(distribution=dist)
     
-    def training(self):
+    def trainModel(self):
 
-        self.train() # Set the model in training mode
-        self.likelihood.train()
+        self.train().cuda().double() # Set the model in training mode
+        self.likelihood.train().cuda().double()
 
         optimizer = torch.optim.Adam([
             {'params': self.feature_extractor.parameters()},
@@ -211,6 +211,7 @@ class DeepKernelGP(gpytorch.models.ExactGP, MLModel):
             optimizer.zero_grad()
             output = self(self.train_x)
             loss = -mll(output, self.train_y)
+            print(loss)
             loss.backward()
             optimizer.step()
 
