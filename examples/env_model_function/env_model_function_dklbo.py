@@ -80,9 +80,9 @@ for trial in range(n_trials):
     # Definition the BO optimizers
     optim_args = {"q": 1, "num_restarts": 25, "raw_samples": 512}
     optimizer1 = DKLBO(init_x=xdoe, init_y=score_doe, num_samples=args.mc_samples, bounds = bounds, MCObjective=objective, acquisition=qExpectedImprovement,
-                    hidden_dims=[1000,500,50], latent_dim=2, scaler=scaler)
+                    hidden_dims=[32,16], latent_dim=2, scaler=scaler)
     optimizer2 = DKLBO(init_x=xdoe, init_y=score_doe, num_samples=args.mc_samples, bounds = bounds, MCObjective=objective, acquisition=qLogExpectedImprovement, 
-                    hidden_dims=[1000,500,50], latent_dim=2, scaler=scaler)
+                    hidden_dims=[32,16], latent_dim=2, scaler=scaler)
 
     # Running the optimization loop
     for iteration in range(n_iterations):

@@ -202,8 +202,12 @@ class DeepKernelGP(gpytorch.models.ExactGP, MLModel):
     
     def trainModel(self):
 
-        self.train().cuda().double() # Set the model in training mode
-        self.likelihood.train().cuda().double()
+        if torch.cuda.is_available():
+            self.train().cuda().double() # Set the model in training mode
+            self.likelihood.train().cuda().double()
+        else:
+            self.train().double() # Set the model in training mode
+            self.likelihood.train().double()
 
         optimizer = torch.optim.Adam([
             {'params': self.feature_extractor.parameters()},
