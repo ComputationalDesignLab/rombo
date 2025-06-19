@@ -91,7 +91,7 @@ class DKLBO(BaseBO):
         Y_tf, _ = self.scaler(self.ydoe)
         
         # Training the GP model
-        gp_model = DeepKernelGP(self.xdoe, Y_tf.reshape(-1), self.hidden_dims, zd=self.latent_dim, outcome_transform=self.scaler, activation=nn.SiLU())
+        gp_model = DeepKernelGP(self.xdoe, Y_tf.reshape(-1), self.hidden_dims, zd=self.latent_dim, outcome_transform=self.scaler, activation=nn.ReLU())
         gp_model.trainModel()
 
         # Creating the acquisition function
@@ -107,7 +107,7 @@ class DKLBO(BaseBO):
             new_y = self.MCObjective.function(x)
             new_score = self.MCObjective.utility(new_y)
             self.ydoe = torch.cat((self.ydoe, new_score.reshape((1,self.ydoe.shape[-1]))), dim = 0)
-            
+
     "Method to run the optimization in a loop"
     def optimize(self, tag, n_iterations, tkwargs):
 
