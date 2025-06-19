@@ -72,19 +72,17 @@ for trial in range(n_trials):
     ydoe = ydoe.reshape((ydoe.shape[0], objective.output_dim))
 
     # Calculating initial scores for standard BO procedure
-    score_doe = -objective.utility(ydoe)
+    score_doe = objective.utility(ydoe).unsqueeze(-1)
 
     # Standardize the outcome data
-    mean_score = torch.mean(score_doe)
-    std_score = torch.std(score_doe)
-    standardized_doe = (score_doe - mean_score) / std_score
+    scaler = Standardize(m=1)
 
     # Definition the BO optimizers
     optim_args = {"q": 1, "num_restarts": 25, "raw_samples": 512}
     optimizer1 = DKLBO(init_x=xdoe, init_y=score_doe, num_samples=args.mc_samples, bounds = bounds, MCObjective=objective, acquisition=qExpectedImprovement,
-                    hidden_dims=[8,4], latent_dim=2)
+                    hidden_dims=[16,8], latent_dim=4, scaler=scaler)
     optimizer2 = DKLBO(init_x=xdoe, init_y=score_doe, num_samples=args.mc_samples, bounds = bounds, MCObjective=objective, acquisition=qLogExpectedImprovement, 
-                    hidden_dims=[8,4], latent_dim=2)
+                    hidden_dims=[16,8], latent_dim=4, scaler=scaler)
 
     # Running the optimization loop
     for iteration in range(n_iterations):

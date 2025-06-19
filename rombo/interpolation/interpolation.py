@@ -8,6 +8,8 @@
 
 # 2. GPyTorch Documentation: https://docs.gpytorch.ai/en/v1.13/examples/06_PyTorch_NN_Integration_DKL/KISSGP_Deep_Kernel_Regression_CUDA.html
 
+# 3. BoTorch API Documentation: https://botorch.readthedocs.io/en/latest/_modules/botorch/models/gpytorch.html#GPyTorchModel 
+
 # Importing relevant libraries
 import torch
 import torch.nn as nn
@@ -156,7 +158,7 @@ class BoTorchModelList(MLModel):
 class DeepKernelGP(gpytorch.models.ExactGP, MLModel):
 
     # Need to standardize the output data and add in that capability
-    def __init__(self, train_x, train_y, hidden_dims, zd=2, activation=nn.SiLU()):
+    def __init__(self, train_x, train_y, hidden_dims, zd, outcome_transform, activation=nn.SiLU()):
 
         # Specifying the likelihood as the Gaussian likelihood
         super(DeepKernelGP, self).__init__(train_x, train_y, gpytorch.likelihoods.GaussianLikelihood())
@@ -166,6 +168,9 @@ class DeepKernelGP(gpytorch.models.ExactGP, MLModel):
         self.mean_module = gpytorch.means.ConstantMean()
         self.covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel())
         self.num_outputs = 1
+
+        # Setting the outcome transform for the model
+        self.outcome_transform = outcome_transform
 
         # Setting up the feature extractor
         encoder_layers = []
@@ -191,7 +196,9 @@ class DeepKernelGP(gpytorch.models.ExactGP, MLModel):
         self.eval()
         self.likelihood.eval()
         dist = self.likelihood(self(X))
-        return GPyTorchPosterior(distribution=dist)
+        posterior = GPyTorchPosterior(distribution=dist)
+        posterior = self.outcome_transform.untransform_posterior(posterior, X=X)
+        return posterior
     
     def trainModel(self):
 
@@ -211,7 +218,6 @@ class DeepKernelGP(gpytorch.models.ExactGP, MLModel):
             optimizer.zero_grad()
             output = self(self.train_x)
             loss = -mll(output, self.train_y)
-            print(loss)
             loss.backward()
             optimizer.step()
 
