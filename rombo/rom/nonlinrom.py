@@ -3,12 +3,13 @@ from ..interpolation.interpolation import BoTorchModel
 from ..dimensionality_reduction.dim_red import AutoencoderReduction
 from .baserom import ROM
 from botorch.models.transforms import Standardize
+from botorch.models.kernels import InfiniteWidthBNNKernel
 
 tkwargs = {"device": torch.device("cpu") if not torch.cuda.is_available() else torch.device("cuda:0"), "dtype": torch.float64}
 
 class AUTOENCROM(ROM):
 
-    def __init__(self, param_doe, snapshot_matrix, autoencoder, low_dim_model, low_dim_likelihood, supervised = False, standard = True, saas = False):
+    def __init__(self, param_doe, snapshot_matrix, autoencoder, low_dim_model, low_dim_likelihood, supervised = False, standard = True, saas = False, ibnn = False, ibnn_depth = 3):
             
         # Setting the training data of the model
         self.param_doe = self._checkTensor(param_doe)
@@ -17,6 +18,8 @@ class AUTOENCROM(ROM):
         self.autoencoder = autoencoder
         self.supervised = supervised
         self.saas = saas
+        self.ibnn = ibnn
+        self.ibnn_depth = ibnn_depth
 
         # Setting the interpolation and regression data for the model
         self.low_dim_model = low_dim_model
@@ -56,7 +59,10 @@ class AUTOENCROM(ROM):
             self.gp_model.trainModel(type='bayesian')
         else:
             # Training GPR model
-            self.gp_model = BoTorchModel(self.low_dim_model, self.low_dim_likelihood, train_x, a.detach(), model_args={"outcome_transform": Standardize(a.detach().shape[-1])})
+            if self.ibnn: # Determining whether to use the infinite width BNN kernel function
+                self.gp_model = BoTorchModel(self.low_dim_model, self.low_dim_likelihood, train_x, a.detach(), model_args={"data_covar_module": InfiniteWidthBNNKernel(depth=self.ibnn_depth), "outcome_transform": Standardize(a.detach().shape[-1])})
+            else:
+                self.gp_model = BoTorchModel(self.low_dim_model, self.low_dim_likelihood, train_x, a.detach(), model_args={"outcome_transform": Standardize(a.detach().shape[-1])})
             self.gp_model.trainModel()
 
     "Method to predict using the trained ROM for a given test data"
