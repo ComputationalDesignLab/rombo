@@ -34,7 +34,7 @@ args = parser.parse_args()
 inputdim = args.input_dim
 xlimits = np.array([[0.0, 1.0]]*inputdim)
 n_init = 10
-objective = LangermannFunction(input_dim=inputdim, output_dim=args.output_dim, normalized=True)
+objective = RosenbrockFunction(input_dim=inputdim, output_dim=args.output_dim, normalized=True)
 bounds = torch.cat((torch.zeros(1, inputdim), torch.ones(1, inputdim))).to(**tkwargs)
 n_trials = 1
 n_iterations = 30

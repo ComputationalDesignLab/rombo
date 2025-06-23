@@ -34,11 +34,11 @@ args = parser.parse_args()
 # Instantiating the problem and defining optimization parameters
 inputdim = args.input_dim
 xlimits = np.array([[0.0, 1.0]]*inputdim)
-n_init = 10
+n_init = 100
 objective = LangermannFunction(input_dim=inputdim, output_dim=args.output_dim, normalized=True)
 bounds = torch.cat((torch.zeros(1, inputdim), torch.ones(1, inputdim))).to(**tkwargs)
 n_trials = 1
-n_iterations = 30
+n_iterations = 900
 
 # Defining arrays to store values during the optimization loop
 boei_objectives = np.zeros((n_trials, n_iterations))
@@ -78,7 +78,7 @@ for trial in range(n_trials):
     ydoe = ydoe.reshape((ydoe.shape[0], objective.output_dim))
 
     # Calculating initial scores for standard BO procedure
-    score_doe = objective.utility(ydoe)
+    score_doe = objective.utility(ydoe).squeeze(-1)
 
     # Definition the BO optimizers
     autoencoder = MLPAutoEnc(high_dim=ydoe.shape[-1], hidden_dims=[256,64], zd = args.latent_dim, activation = torch.nn.SiLU())

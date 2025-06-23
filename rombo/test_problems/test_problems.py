@@ -20,6 +20,52 @@ from pde import PDE, FieldCollection, ScalarField, UnitGrid
 # Arguments for GPU-related calculations
 tkwargs = {"device": torch.device("cpu") if not torch.cuda.is_available() else torch.device("cuda:0"), "dtype": torch.float64}
 
+class RosenbrockFunction(TestFunction):
+
+    def __init__(self, input_dim=10, output_dim=18, normalized = False):
+
+        self.input_dim = input_dim
+        self.output_dim = output_dim
+        self.normalized = normalized
+
+        self.lower_bounds = [-2]*input_dim
+        self.upper_bounds = [1.5]*input_dim
+
+    def function(self, x):
+        if self.normalized:
+            xnew = x.clone()
+            for i in range(self.input_dim):
+                xnew[i] = (
+                    xnew[i] * (self.upper_bounds[i] - self.lower_bounds[i])
+                ) + self.lower_bounds[i]
+        else:
+            xnew = x
+
+        x_first = xnew[0:-1]
+        x_sq = x_first**2
+        x_next = xnew[1:]
+        diffs = x_next - x_sq
+        h_x = torch.cat((diffs, x_first))
+        h_x = h_x.reshape(1, -1)
+
+        return h_x
+
+    def evaluate(self, X):
+        return torch.stack([self.function(x) for x in X])
+
+    def score(self, y):
+        
+        y_first = y[0 : self.input_dim - 1]
+        term1 = 100 * (y_first**2)
+        y_next = y[self.input_dim - 1 :]
+        term2 = (y_next - 1) ** 2
+        reward = (term1 + term2).sum()
+        reward = reward * -1  # make it a Maximization task
+        return reward
+
+    def utility(self, Y):
+        return torch.stack([self.score(y) for y in Y])
+
 class LangermannFunction(TestFunction):
 
     def __init__(self, input_dim, output_dim, normalized=False):
@@ -52,7 +98,8 @@ class LangermannFunction(TestFunction):
 
     def utility(self, y):
         reward = self.c * torch.exp((-1 * y) / math.pi) * torch.cos(math.pi * y)
-        return reward.sum(dim=-1,keepdim=True)
+        out = reward.sum(dim=-1,keepdim=True)
+        return -out.reshape(out.shape[0], out.shape[1], 1)
 
 class EnvModelFunction(TestFunction):
 

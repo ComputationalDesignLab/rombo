@@ -139,5 +139,5 @@ for trial in range(n_trials):
 # Storing the final data
 results = {"BO_EI": {"objectives": boei_objectives, "design": boei_dvs, "doe": boei_doe, "time": boei_t}, "BO_LOGEI": {"objectives": bologei_objectives, "design": bologei_dvs, "doe": bologei_doe, "time": bologei_t}, 
            "ROMBO_EI": {"objectives": romboei_objectives, "design": romboei_dvs, "doe": romboei_doe, "time": romboei_t}, "ROMBO_LOGEI": {"objectives": rombologei_objectives, "design": rombologei_dvs, "doe": rombologei_doe, "time": rombologei_t}}
-savemat("./env_model_results_{}_{}_BO_trial_{}_LD_{}_MC_{}.mat".format(args.input_dim, args.output_dim, args.trial_num, args.latent_dim, args.mc_samples), results)
+#savemat("./env_model_results_{}_{}_BO_trial_{}_LD_{}_MC_{}.mat".format(args.input_dim, args.output_dim, args.trial_num, args.latent_dim, args.mc_samples), results)
 
