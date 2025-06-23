@@ -68,7 +68,7 @@ class RosenbrockFunction(TestFunction):
     def utility(self, Y):
         if Y.dim() > 2:
             Y = Y.reshape(Y.shape[0], Y.shape[1], -1)
-            return torch.stack([[self.score(yprime) for yprime in y] for y in Y])
+            return torch.stack([torch.stack([self.score(yprime) for yprime in y]) for y in Y]).unsqueeze(-1)
         else:
             return torch.stack([self.score(y) for y in Y])
 

@@ -14,31 +14,36 @@ tkwargs = {
 }
 
 # Defining environment model function 
-problem = RosenbrockFunction(input_dim = 14, output_dim = 26, normalized = False)
+#problem = RosenbrockFunction(input_dim = 14, output_dim = 26, normalized = False)
 
+a = torch.rand([5,2,1,10])
+print(a)
+a = a.reshape(a.shape[0],a.shape[1],-1)
+b = torch.stack([torch.stack([x for x in A]) for A in a])
+print(b.shape)
 # Creating the training data
-n_data = 5
-xlimits = np.array([[-4.0, 4.0]]*problem.input_dim)
-sampler = LHS(xlimits=xlimits, criterion="ese", random_state=1)
-xtrain = sampler(n_data)
-xtrain = torch.tensor(xtrain, **tkwargs)
-htrain = problem.evaluate(xtrain).flatten(1)
-print(htrain.shape)
-print(xtrain)
-#print(htrain)
-#print(xtrain)
-ytrain = problem.utility(htrain)
-print(ytrain)
+# n_data = 5
+# xlimits = np.array([[-4.0, 4.0]]*problem.input_dim)
+# sampler = LHS(xlimits=xlimits, criterion="ese", random_state=1)
+# xtrain = sampler(n_data)
+# xtrain = torch.tensor(xtrain, **tkwargs)
+# htrain = problem.evaluate(xtrain).flatten(1)
+# print(htrain.shape)
+# print(xtrain)
+# #print(htrain)
+# #print(xtrain)
+# ytrain = problem.utility(htrain)
+# print(ytrain)
 
-a = torch.tensor([[1.0]*14])
-h = problem.evaluate(a).flatten(1)
-print(problem.utility(h))
+# a = torch.tensor([[1.0]*14])
+# h = problem.evaluate(a).flatten(1)
+# print(problem.utility(h))
 
-# Generating the test data
-test_sampler = LHS(xlimits=xlimits, criterion="ese", random_state=1)
-xtest = test_sampler(10)
-xtest = torch.tensor(xtest, **tkwargs)
-htest = problem.evaluate(xtest).flatten(1)
+# # Generating the test data
+# test_sampler = LHS(xlimits=xlimits, criterion="ese", random_state=1)
+# xtest = test_sampler(10)
+# xtest = torch.tensor(xtest, **tkwargs)
+# htest = problem.evaluate(xtest).flatten(1)
 
 # # Generating the nonlinear ROM model
 # autoencoder = MLPAutoEnc(high_dim=problem.output_dim, hidden_dims=[256,64], zd = 10, activation = torch.nn.SiLU()).double()

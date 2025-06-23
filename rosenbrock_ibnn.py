@@ -34,11 +34,11 @@ args = parser.parse_args()
 # Instantiating the problem and defining optimization parameters
 inputdim = args.input_dim
 xlimits = np.array([[0.0, 1.0]]*inputdim)
-n_init = 10
+n_init = 25
 objective = RosenbrockFunction(input_dim=inputdim, output_dim=args.output_dim, normalized=True)
 bounds = torch.cat((torch.zeros(1, inputdim), torch.ones(1, inputdim))).to(**tkwargs)
 n_trials = 1
-n_iterations = 30
+n_iterations = 50
 
 # Defining arrays to store values during the optimization loop
 boei_objectives = np.zeros((n_trials, n_iterations))
@@ -84,8 +84,8 @@ for trial in range(n_trials):
     autoencoder = MLPAutoEnc(high_dim=ydoe.shape[-1], hidden_dims=[256,64], zd = args.latent_dim, activation = torch.nn.SiLU())
     autoencoder.double()
     rom_args = {"autoencoder": autoencoder, "low_dim_model": KroneckerMultiTaskGP, "low_dim_likelihood": ExactMarginalLogLikelihood,
-                "standard": False, "saas": False, "ibnn": True, "ibnn_depth": 3}
-    gp_args={"covar_module":InfiniteWidthBNNKernel(depth=3), "outcome_transform": Standardize(score_doe.shape[-1])}
+                "standard": False, "saas": False, "ibnn": True, "ibnn_depth": 6}
+    gp_args={"covar_module":InfiniteWidthBNNKernel(depth=6), "outcome_transform": Standardize(score_doe.shape[-1])}
     optim_args = {"q": 1, "num_restarts": 25, "raw_samples": 512}
     optimizer1 = ROMBO(init_x=xdoe, init_y=ydoe, num_samples=args.mc_samples, bounds = bounds, MCObjective=objective, acquisition=qLogExpectedImprovement, ROM=AUTOENCROM, ROM_ARGS=rom_args)
     optimizer2 = ROMBO(init_x=xdoe, init_y=ydoe, num_samples=args.mc_samples, bounds = bounds, MCObjective=objective, acquisition=qExpectedImprovement, ROM=AUTOENCROM, ROM_ARGS=rom_args)
