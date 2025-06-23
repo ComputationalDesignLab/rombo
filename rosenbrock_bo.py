@@ -5,7 +5,7 @@ from smt.sampling_methods import LHS
 from rombo.rom.nonlinrom import AUTOENCROM
 import numpy as np
 from rombo.dimensionality_reduction.autoencoder import MLPAutoEnc
-from rombo.test_problems.test_problems import LangermannFunction
+from rombo.test_problems.test_problems import RosenbrockFunction
 from rombo.optimization.rombo import ROMBO
 from rombo.optimization.stdbo import BO
 from botorch.models.transforms import Standardize

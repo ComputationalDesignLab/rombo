@@ -31,7 +31,9 @@ class ROMBO(BaseBO):
 
         "Function definition for MC Objective"
         def function(samples, X=None):
+            print(samples.shape)
             samples = model.dimensionreduction.backmapping(samples)
+            print(self.MCObjective.utility(samples).shape)
             return self.MCObjective.utility(samples)
 
         self.objective = GenericMCObjective(function)

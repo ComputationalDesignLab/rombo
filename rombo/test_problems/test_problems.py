@@ -60,16 +60,17 @@ class RosenbrockFunction(TestFunction):
         y_next = y[self.input_dim - 1 :]
         term2 = (y_next - 1) ** 2
         rosen = term1 + term2
-        print("rosen", rosen)
         griewank = (rosen/4000 - torch.cos(rosen))
-        print(griewank)
         reward = (10/(self.input_dim-1))*griewank.sum() + 10
         reward = reward * -1
-        print(reward)
         return reward
 
     def utility(self, Y):
-        return torch.stack([self.score(y) for y in Y])
+        if Y.dim() > 2:
+            Y = Y.reshape(Y.shape[0], Y.shape[1], -1)
+            return torch.stack([[self.score(yprime) for yprime in y] for y in Y])
+        else:
+            return torch.stack([self.score(y) for y in Y])
 
 class LangermannFunction(TestFunction):
 
