@@ -28,8 +28,8 @@ class RosenbrockFunction(TestFunction):
         self.output_dim = output_dim
         self.normalized = normalized
 
-        self.lower_bounds = [-2]*input_dim
-        self.upper_bounds = [1.5]*input_dim
+        self.lower_bounds = [-4]*input_dim
+        self.upper_bounds = [4]*input_dim
 
     def function(self, x):
         if self.normalized:
@@ -59,8 +59,13 @@ class RosenbrockFunction(TestFunction):
         term1 = 100 * (y_first**2)
         y_next = y[self.input_dim - 1 :]
         term2 = (y_next - 1) ** 2
-        reward = (term1 + term2).sum()
-        reward = reward * -1  # make it a Maximization task
+        rosen = term1 + term2
+        print("rosen", rosen)
+        griewank = (rosen/4000 - torch.cos(rosen))
+        print(griewank)
+        reward = (10/(self.input_dim-1))*griewank.sum() + 10
+        reward = reward * -1
+        print(reward)
         return reward
 
     def utility(self, Y):

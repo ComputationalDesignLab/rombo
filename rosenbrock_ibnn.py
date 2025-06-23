@@ -79,6 +79,7 @@ for trial in range(n_trials):
 
     # Calculating initial scores for standard BO procedure
     score_doe = objective.utility(ydoe).unsqueeze(-1)
+    print(score_doe)
 
     # Definition the BO optimizers
     autoencoder = MLPAutoEnc(high_dim=ydoe.shape[-1], hidden_dims=[256,64], zd = args.latent_dim, activation = torch.nn.SiLU())

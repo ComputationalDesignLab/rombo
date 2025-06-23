@@ -3,7 +3,7 @@ import numpy as np
 from smt.sampling_methods import LHS
 from rombo.dimensionality_reduction.autoencoder import MLPAutoEnc
 from rombo.rom.nonlinrom import AUTOENCROM
-from rombo.test_problems.test_problems import LangermannFunction
+from rombo.test_problems.test_problems import RosenbrockFunction
 from botorch.models import KroneckerMultiTaskGP
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
@@ -14,23 +14,28 @@ tkwargs = {
 }
 
 # Defining environment model function 
-problem = LangermannFunction(input_dim = 16, output_dim = 60, normalized = False)
+problem = RosenbrockFunction(input_dim = 14, output_dim = 26, normalized = False)
 
 # Creating the training data
-n_data = 10
-xlimits = np.array([[0.0, 10.0]]*problem.input_dim)
-sampler = LHS(xlimits=xlimits, criterion="ese")
+n_data = 5
+xlimits = np.array([[-4.0, 4.0]]*problem.input_dim)
+sampler = LHS(xlimits=xlimits, criterion="ese", random_state=1)
 xtrain = sampler(n_data)
 xtrain = torch.tensor(xtrain, **tkwargs)
 htrain = problem.evaluate(xtrain).flatten(1)
-a = torch.rand(5,1,16)
-h = problem.evaluate(a)
-print(problem.utility(h).shape)
+print(htrain.shape)
+print(xtrain)
+#print(htrain)
 # print(xtrain)
-# print(problem.utility(htrain))
+ytrain = problem.utility(htrain)
+print(ytrain)
+
+a = torch.tensor([[1.0]*14])
+h = problem.evaluate(a).flatten(1)
+print(problem.utility(h))
 
 # Generating the test data
-test_sampler = LHS(xlimits=xlimits, criterion="ese")
+test_sampler = LHS(xlimits=xlimits, criterion="ese", random_state=1)
 xtest = test_sampler(10)
 xtest = torch.tensor(xtest, **tkwargs)
 htest = problem.evaluate(xtest).flatten(1)
