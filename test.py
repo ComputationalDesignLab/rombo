@@ -26,7 +26,7 @@ htrain = problem.evaluate(xtrain).flatten(1)
 print(htrain.shape)
 print(xtrain)
 #print(htrain)
-# print(xtrain)
+#print(xtrain)
 ytrain = problem.utility(htrain)
 print(ytrain)
 
