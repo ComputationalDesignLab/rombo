@@ -14,41 +14,42 @@ tkwargs = {
 }
 
 # Defining environment model function 
-problem = RosenbrockFunction(input_dim = 14, output_dim = 26, normalized = False)
+problem = RosenbrockFunction(input_dim = 10, output_dim = 18, normalized = True)
 
 # Creating the training data
-n_data = 5
-xlimits = np.array([[-4.0, 4.0]]*problem.input_dim)
-sampler = LHS(xlimits=xlimits, criterion="ese", random_state=1)
+n_data = 20
+xlimits = np.array([[0.0, 1.0]]*problem.input_dim)
+sampler = LHS(xlimits=xlimits, criterion="ese")
 xtrain = sampler(n_data)
 xtrain = torch.tensor(xtrain, **tkwargs)
 htrain = problem.evaluate(xtrain).flatten(1)
-print(htrain.shape)
-print(xtrain)
-#print(htrain)
-#print(xtrain)
-ytrain = problem.utility(htrain)
-print(ytrain)
+print(htrain)
+# print(htrain.shape)
+# print(xtrain)
+# #print(htrain)
+# #print(xtrain)
+# ytrain = problem.utility(htrain)
+# print(ytrain)
 
-a = torch.tensor([[1.0]*14])
-h = problem.evaluate(a).flatten(1)
-print(problem.utility(h))
+# a = torch.tensor([[1.0]*14])
+# h = problem.evaluate(a).flatten(1)
+# print(problem.utility(h))
 
 # Generating the test data
 test_sampler = LHS(xlimits=xlimits, criterion="ese", random_state=1)
-xtest = test_sampler(10)
+xtest = test_sampler(50)
 xtest = torch.tensor(xtest, **tkwargs)
 htest = problem.evaluate(xtest).flatten(1)
 
-# # Generating the nonlinear ROM model
-# autoencoder = MLPAutoEnc(high_dim=problem.output_dim, hidden_dims=[256,64], zd = 10, activation = torch.nn.SiLU()).double()
-# rom = AUTOENCROM(xtrain, htrain, autoencoder = autoencoder, low_dim_model = KroneckerMultiTaskGP, low_dim_likelihood = ExactMarginalLogLikelihood)
+# Generating the nonlinear ROM model
+autoencoder = MLPAutoEnc(high_dim=problem.output_dim, hidden_dims=[16,8], zd = 6, activation = torch.nn.LeakyReLU()).double()
+rom = AUTOENCROM(xtrain, htrain, autoencoder = autoencoder, low_dim_model = KroneckerMultiTaskGP, low_dim_likelihood = ExactMarginalLogLikelihood)
 
-# # Training the ROM and predicting on the test data
-# rom.trainROM(verbose=False)
-# field = rom.predictROM(xtest)
+# Training the ROM and predicting on the test data
+rom.trainROM(verbose=True)
+field = rom.predictROM(xtest)
 
-# print(field[0] - htest[0])
-# print(np.ptp(htest[0]))
+print(field[0] - htest[0])
+print(np.ptp(htest[0]))
 
 
