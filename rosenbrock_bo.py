@@ -33,11 +33,11 @@ args = parser.parse_args()
 # Instantiating the problem and defining optimization parameters
 inputdim = args.input_dim
 xlimits = np.array([[0.0, 1.0]]*inputdim)
-n_init = 25
+n_init = 50
 objective = RosenbrockFunction(input_dim=inputdim, output_dim=args.output_dim, normalized=True)
 bounds = torch.cat((torch.zeros(1, inputdim), torch.ones(1, inputdim))).to(**tkwargs)
 n_trials = 1
-n_iterations = 50
+n_iterations = 150
 
 # Defining arrays to store values during the optimization loop
 boei_objectives = np.zeros((n_trials, n_iterations))
