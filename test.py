@@ -16,6 +16,11 @@ tkwargs = {
 # Defining environment model function 
 problem = RosenbrockFunction(input_dim = 10, output_dim = 18, normalized = True)
 
+a = torch.rand([5,2,1,10])
+print(a)
+a = a.reshape(a.shape[0],a.shape[1],-1)
+b = torch.stack([torch.stack([x for x in A]) for A in a])
+print(b.shape)
 # Creating the training data
 n_data = 20
 xlimits = np.array([[0.0, 1.0]]*problem.input_dim)
@@ -31,6 +36,9 @@ print(htrain)
 # ytrain = problem.utility(htrain)
 # print(ytrain)
 
+# a = torch.tensor([[1.0]*14])
+# h = problem.evaluate(a).flatten(1)
+# print(problem.utility(h))
 # a = torch.tensor([[1.0]*14])
 # h = problem.evaluate(a).flatten(1)
 # print(problem.utility(h))
