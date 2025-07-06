@@ -105,7 +105,7 @@ class LangermannFunction(TestFunction):
     def utility(self, y):
         reward = self.c * torch.exp((-1 * y) / math.pi) * torch.cos(math.pi * y)
         out = reward.sum(dim=-1,keepdim=True)
-        return -out.reshape(out.shape[0], out.shape[1], 1)
+        return out.reshape(out.shape[0], out.shape[1], 1)
 
 class EnvModelFunction(TestFunction):
 

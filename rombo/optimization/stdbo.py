@@ -55,6 +55,7 @@ class BO(BaseBO):
         for x in new_x:
             self.xdoe = torch.cat((self.xdoe, x.unsqueeze(0)), dim = 0)
             new_y = self.MCObjective.function(x)
+            new_y = new_y.reshape((1, new_y.shape[-1]))
             new_score = self.MCObjective.utility(new_y)
             self.ydoe = torch.cat((self.ydoe, new_score.reshape((1,self.ydoe.shape[-1]))), dim = 0)
 

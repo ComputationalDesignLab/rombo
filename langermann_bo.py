@@ -85,7 +85,7 @@ for trial in range(n_trials):
     rom_args = {"autoencoder": autoencoder, "low_dim_model": KroneckerMultiTaskGP, "low_dim_likelihood": ExactMarginalLogLikelihood,
                 "standard": False, "saas": False}
     gp_args={"outcome_transform": Standardize(score_doe.shape[-1])}
-    optim_args = {"q": 1, "num_restarts": 50, "raw_samples": 512}
+    optim_args = {"q": 1, "num_restarts": 25, "raw_samples": 512}
     optimizer1 = ROMBO(init_x=xdoe, init_y=ydoe, num_samples=args.mc_samples, bounds = bounds, MCObjective=objective, acquisition=qLogExpectedImprovement, ROM=AUTOENCROM, ROM_ARGS=rom_args)
     optimizer2 = ROMBO(init_x=xdoe, init_y=ydoe, num_samples=args.mc_samples, bounds = bounds, MCObjective=objective, acquisition=qExpectedImprovement, ROM=AUTOENCROM, ROM_ARGS=rom_args)
     optimizer3 = BO(init_x=xdoe, init_y=score_doe, num_samples=args.mc_samples, bounds = bounds, MCObjective=objective, acquisition=qExpectedImprovement, GP=SingleTaskGP, 
@@ -102,10 +102,10 @@ for trial in range(n_trials):
         optimizer1.do_one_step(tag = 'ROMBO + Log EI', tkwargs=optim_args)
         tf = time.time()
         rombologei_t[trial][iteration] = tf-ti
-        ti = time.time()
-        optimizer2.do_one_step(tag = 'ROMBO + EI', tkwargs=optim_args)
-        tf = time.time()
-        romboei_t[trial][iteration] = tf-ti
+        # ti = time.time()
+        # optimizer2.do_one_step(tag = 'ROMBO + EI', tkwargs=optim_args)
+        # tf = time.time()
+        # romboei_t[trial][iteration] = tf-ti
         # ti = time.time()
         # optimizer3.do_one_step(tag = 'BO + EI', tkwargs=optim_args)
         # tf = time.time()
@@ -123,9 +123,9 @@ for trial in range(n_trials):
         # bologei_dvs[trial][iteration] = optimizer4.best_x
         # bologei_EI[trial][iteration] = optimizer4.maxEI
 
-        romboei_objectives[trial][iteration] = optimizer2.best_f
-        romboei_dvs[trial][iteration] = optimizer2.best_x
-        romboei_EI[trial][iteration] = optimizer2.maxEI
+        # romboei_objectives[trial][iteration] = optimizer2.best_f
+        # romboei_dvs[trial][iteration] = optimizer2.best_x
+        # romboei_EI[trial][iteration] = optimizer2.maxEI
 
         rombologei_objectives[trial][iteration] = optimizer1.best_f
         rombologei_dvs[trial][iteration] = optimizer1.best_x
@@ -133,7 +133,7 @@ for trial in range(n_trials):
     
     # boei_doe[trial] = optimizer3.xdoe.detach().cpu().numpy()
     # bologei_doe[trial] = optimizer4.xdoe.detach().cpu().numpy()
-    romboei_doe[trial] = optimizer2.xdoe.detach().cpu().numpy()
+    # romboei_doe[trial] = optimizer2.xdoe.detach().cpu().numpy()
     rombologei_doe[trial] = optimizer1.xdoe.detach().cpu().numpy()
  
 # Storing the final data

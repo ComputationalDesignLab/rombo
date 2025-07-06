@@ -22,7 +22,7 @@ a = a.reshape(a.shape[0],a.shape[1],-1)
 b = torch.stack([torch.stack([x for x in A]) for A in a])
 print(b.shape)
 # Creating the training data
-n_data = 20
+n_data = 50
 xlimits = np.array([[0.0, 1.0]]*problem.input_dim)
 sampler = LHS(xlimits=xlimits, criterion="ese")
 xtrain = sampler(n_data)
@@ -45,19 +45,19 @@ print(htrain)
 
 # Generating the test data
 test_sampler = LHS(xlimits=xlimits, criterion="ese", random_state=1)
-xtest = test_sampler(50)
+xtest = test_sampler(100)
 xtest = torch.tensor(xtest, **tkwargs)
 htest = problem.evaluate(xtest).flatten(1)
 
 # Generating the nonlinear ROM model
-autoencoder = MLPAutoEnc(high_dim=problem.output_dim, hidden_dims=[16,8], zd = 6, activation = torch.nn.LeakyReLU()).double()
+autoencoder = MLPAutoEnc(high_dim=problem.output_dim, hidden_dims=[512,256], zd = 16, activation = torch.nn.Tanh()).double()
 rom = AUTOENCROM(xtrain, htrain, autoencoder = autoencoder, low_dim_model = KroneckerMultiTaskGP, low_dim_likelihood = ExactMarginalLogLikelihood)
 
 # Training the ROM and predicting on the test data
-rom.trainROM(verbose=True)
+rom.trainROM(verbose=False)
 field = rom.predictROM(xtest)
 
-print(field[0] - htest[0])
-print(np.ptp(htest[0]))
+print(field[0])
+print(htest[0])
 
 
