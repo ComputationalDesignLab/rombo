@@ -29,10 +29,20 @@ class ROMBO(BaseBO):
     "Method to set the objective for MC Bayesian optimization"
     def setobjective(self, model):
 
-        "Function definition for MC Objective"
-        def function(samples, X=None):
-            samples = model.dimensionreduction.backmapping(samples)
-            return self.MCObjective.utility(samples)
+        if self.args["standard"] == True:
+            "Function definition for MC Objective"
+            def function(samples, X=None):
+
+                samples = model.dimensionreduction.backmapping(samples)
+                samples = model.unstandardize(samples)
+                return self.MCObjective.utility(samples)
+        
+        else:
+            "Function definition for MC Objective"
+            def function(samples, X=None):
+
+                samples = model.dimensionreduction.backmapping(samples)
+                return self.MCObjective.utility(samples)
 
         self.objective = GenericMCObjective(function)
 

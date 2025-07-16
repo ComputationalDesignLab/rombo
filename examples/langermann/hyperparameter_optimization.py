@@ -27,7 +27,7 @@ class optimizeAutoencoder():
         # Generating the data
 
         # Defining environment model function 
-        self.problem = LangermannFunction(input_dim = 16, output_dim = 60, normalized = True)
+        self.problem = LangermannFunction(input_dim=16, output_dim=600, normalized=True)
 
         # Creating the training data
         n_data = trainSamples
@@ -140,9 +140,4 @@ class optimizeAutoencoder():
     def getBestParams(self):
         best_parameters, _, _, _ = self.client.get_best_parameterization()
         return best_parameters
-
-
-
-        
-
 
