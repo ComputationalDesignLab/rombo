@@ -4,10 +4,9 @@ import torch
 from smt.sampling_methods import LHS
 from rombo.dimensionality_reduction.autoencoder import MLPAutoEnc
 from rombo.rom.nonlinrom import AUTOENCROM
-from rombo.test_problems.test_problems import RosenbrockFunction
+from rombo.test_problems.test_problems import LangermannFunction
 from botorch.models import KroneckerMultiTaskGP
 from gpytorch.mlls import ExactMarginalLogLikelihood
-from sklearn.metrics import mean_squared_error
 from ax.api.client import Client
 from ax.api.configs import RangeParameterConfig, ChoiceParameterConfig
 
@@ -28,7 +27,7 @@ class optimizeAutoencoder():
         # Generating the data
 
         # Defining environment model function 
-        self.problem = RosenbrockFunction(input_dim = 10, output_dim = 18, normalized = True)
+        self.problem = LangermannFunction(input_dim = 16, output_dim = 60, normalized = True)
 
         # Creating the training data
         n_data = trainSamples

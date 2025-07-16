@@ -114,7 +114,8 @@ class AutoencoderReduction(DimensionalityReduction):
             optimizer.step()
 
             if verbose:
-                print('Epoch: ', epoch, 'Loss: ', loss.item())
+                if epoch%100==0:
+                    print('Epoch: ', epoch, 'Loss: ', loss.item())
             
             # Storing losses for printing
             losses.append(loss.item())

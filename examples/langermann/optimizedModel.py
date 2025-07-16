@@ -1,6 +1,5 @@
-import numpy as np
-from scipy.io import loadmat, savemat
-from hyperparameterOptimization import optimizeAutoencoder
+from scipy.io import savemat
+from hyperparameter_optimization import optimizeAutoencoder
 import warnings
 warnings.filterwarnings("ignore")
 

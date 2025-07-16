@@ -20,58 +20,6 @@ from pde import PDE, FieldCollection, ScalarField, UnitGrid
 # Arguments for GPU-related calculations
 tkwargs = {"device": torch.device("cpu") if not torch.cuda.is_available() else torch.device("cuda:0"), "dtype": torch.float64}
 
-class RosenbrockFunction(TestFunction):
-
-    def __init__(self, input_dim=10, output_dim=18, normalized = False):
-
-        self.input_dim = input_dim
-        self.output_dim = output_dim
-        self.normalized = normalized
-
-        self.lower_bounds = [-4]*input_dim
-        self.upper_bounds = [4]*input_dim
-
-    def function(self, x):
-        if self.normalized:
-            xnew = x.clone()
-            for i in range(self.input_dim):
-                xnew[i] = (
-                    xnew[i] * (self.upper_bounds[i] - self.lower_bounds[i])
-                ) + self.lower_bounds[i]
-        else:
-            xnew = x
-
-        x_first = xnew[0:-1]
-        x_sq = x_first**2
-        x_next = xnew[1:]
-        diffs = x_next - x_sq
-        h_x = torch.cat((diffs, x_first))
-        h_x = h_x.reshape(1, -1)
-
-        return h_x
-
-    def evaluate(self, X):
-        return torch.stack([self.function(x) for x in X])
-
-    def score(self, y):
-        
-        y_first = y[0 : self.input_dim - 1]
-        term1 = 100 * (y_first**2)
-        y_next = y[self.input_dim - 1 :]
-        term2 = (y_next - 1) ** 2
-        rosen = term1 + term2
-        griewank = (rosen/4000 - torch.cos(rosen))
-        reward = (10/(self.input_dim-1))*griewank.sum() + 10
-        reward = reward * -1
-        return reward
-
-    def utility(self, Y):
-        if Y.dim() > 2:
-            Y = Y.reshape(Y.shape[0], Y.shape[1], -1)
-            return torch.stack([torch.stack([self.score(yprime) for yprime in y]) for y in Y]).unsqueeze(-1)
-        else:
-            return torch.stack([self.score(y) for y in Y])
-
 class LangermannFunction(TestFunction):
 
     def __init__(self, input_dim, output_dim, normalized=False):
@@ -82,9 +30,9 @@ class LangermannFunction(TestFunction):
         self.lower_bounds = [0.0]*input_dim
         self.upper_bounds = [10.0]*input_dim
 
-        self.A = torch.tensor([[3, 5, 2, 1, 7], [5, 2, 1, 4, 9]]) # Original A matrix for Langermann function
+        self.A = torch.tensor([[3, 5, 2, 1, 7], [5, 2, 1, 4, 9]], **tkwargs).float() # Original A matrix for Langermann function
         self.A = self.A.repeat(input_dim // 2, output_dim // 5)  # Need to repeat for high-dimensional modification
-        self.c = torch.tensor([1, 2, 5, 2, 3]).float()  # Original c vector for the Langermann function
+        self.c = torch.tensor([1, 2, 5, 2, 3], **tkwargs).float()  # Original c vector for the Langermann function
         self.c = self.c.repeat(output_dim // 5,) # Need to repeat foor high-dimensional modification
 
     def function(self, x):
