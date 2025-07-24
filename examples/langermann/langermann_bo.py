@@ -77,7 +77,7 @@ for trial in range(n_trials):
     ydoe = ydoe.reshape((ydoe.shape[0], objective.output_dim))
 
     # Calculating initial scores for standard BO procedure
-    score_doe = objective.utility(ydoe).squeeze()
+    score_doe = objective.utility(ydoe).squeeze(-1)
 
     # Definition the BO optimizers
     autoencoder = MLPAutoEnc(high_dim=ydoe.shape[-1], hidden_dims=[256,64], zd = args.latent_dim, activation = torch.nn.SiLU())
@@ -98,15 +98,14 @@ for trial in range(n_trials):
 
         print("\n\n##### Running iteration {} out of {} #####".format(iteration+1, n_iterations))
 
-        ti = time.time()
-        optimizer1.do_one_step(tag = 'ROMBO + Log EI', tkwargs=optim_args)
-        tf = time.time()
-        rombologei_t[trial][iteration] = tf-ti
-        print(tf-ti)
-        ti = time.time()
-        optimizer2.do_one_step(tag = 'ROMBO + EI', tkwargs=optim_args)
-        tf = time.time()
-        romboei_t[trial][iteration] = tf-ti
+        # ti = time.time()
+        # optimizer1.do_one_step(tag = 'ROMBO + Log EI', tkwargs=optim_args)
+        # tf = time.time()
+        # rombologei_t[trial][iteration] = tf-ti
+        # ti = time.time()
+        # optimizer2.do_one_step(tag = 'ROMBO + EI', tkwargs=optim_args)
+        # tf = time.time()
+        # romboei_t[trial][iteration] = tf-ti
         ti = time.time()
         optimizer3.do_one_step(tag = 'BO + EI', tkwargs=optim_args)
         tf = time.time()
@@ -124,18 +123,18 @@ for trial in range(n_trials):
         bologei_dvs[trial][iteration] = optimizer4.best_x
         bologei_EI[trial][iteration] = optimizer4.maxEI
 
-        romboei_objectives[trial][iteration] = optimizer2.best_f
-        romboei_dvs[trial][iteration] = optimizer2.best_x
-        romboei_EI[trial][iteration] = optimizer2.maxEI
+        # romboei_objectives[trial][iteration] = optimizer2.best_f
+        # romboei_dvs[trial][iteration] = optimizer2.best_x
+        # romboei_EI[trial][iteration] = optimizer2.maxEI
 
-        rombologei_objectives[trial][iteration] = optimizer1.best_f
-        rombologei_dvs[trial][iteration] = optimizer1.best_x
-        rombologei_EI[trial][iteration] = optimizer1.maxEI
+        # rombologei_objectives[trial][iteration] = optimizer1.best_f
+        # rombologei_dvs[trial][iteration] = optimizer1.best_x
+        # rombologei_EI[trial][iteration] = optimizer1.maxEI
     
     boei_doe[trial] = optimizer3.xdoe.detach().cpu().numpy()
     bologei_doe[trial] = optimizer4.xdoe.detach().cpu().numpy()
-    romboei_doe[trial] = optimizer2.xdoe.detach().cpu().numpy()
-    rombologei_doe[trial] = optimizer1.xdoe.detach().cpu().numpy()
+    # romboei_doe[trial] = optimizer2.xdoe.detach().cpu().numpy()
+    # rombologei_doe[trial] = optimizer1.xdoe.detach().cpu().numpy()
  
 # Storing the final data
 results = {"BO_EI": {"objectives": boei_objectives, "design": boei_dvs, "doe": boei_doe, "time": boei_t}, "BO_LOGEI": {"objectives": bologei_objectives, "design": bologei_dvs, "doe": bologei_doe, "time": bologei_t}, 
