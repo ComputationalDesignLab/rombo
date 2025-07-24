@@ -3,12 +3,9 @@
 
 # Importing relevant libraries
 import torch
-import torch.nn as nn
-import gpytorch
 from botorch.optim.fit import fit_gpytorch_mll_torch
 from botorch.fit import fit_fully_bayesian_model_nuts
 from botorch.models.model_list_gp_regression import ModelListGP
-from botorch.posteriors.gpytorch import GPyTorchPosterior
 from abc import ABC, abstractmethod
 
 # Arguments for GPU-related calculations
