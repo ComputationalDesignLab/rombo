@@ -146,4 +146,4 @@ results = {"BO_EI": {"objectives": boei_objectives, "design": boei_dvs, "doe": b
             "BO_LOGEI": {"objectives": bologei_objectives, "design": bologei_dvs, "doe": bologei_doe, "time": bologei_t, "predictions": bologei_predictions, "EI": bologei_EI}, 
            "ROMBO_EI": {"objectives": romboei_objectives, "design": romboei_dvs, "doe": romboei_doe, "time": romboei_t, "predictions": romboei_predictions, "EI": romboei_EI}, 
            "ROMBO_LOGEI": {"objectives": rombologei_objectives, "design": rombologei_dvs, "doe": rombologei_doe, "time": rombologei_t, "predictions": rombologei_predictions, "EI": rombologei_EI}}
-#savemat("./brusselator_results_{}_{}_trial_{}_LD_{}_MC_{}.mat".format(args.input_dim, args.mc_samples, args.trial_num, args.latent_dim, args.mc_samples), results)
+savemat("./brusselator_results_{}_{}_trial_{}_LD_{}_MC_{}.mat".format(args.input_dim, args.mc_samples, args.trial_num, args.latent_dim, args.mc_samples), results)

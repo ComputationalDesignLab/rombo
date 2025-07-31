@@ -32,6 +32,11 @@ from botorch.models import KroneckerMultiTaskGP
 from gpytorch.mlls import ExactMarginalLogLikelihood
 ```
 
+After the relevant packages have been imported, the data type and device types are defined for the ``torch`` package to train the models using GPU acceleration and the required floating point precision.
+```python
+tkwargs = {"device": torch.device("cpu") if not torch.cuda.is_available() else torch.device("cuda:0"), "dtype": torch.float64}
+```
+
 A problem class is evaluated using one of the test problems defined in ROMBO. The [SMT](https://github.com/SMTorg/smt) package is used to generate a latin hypercube sampling (LHS) plan 
 and the samples are evaluated using the evaluate method of the test problem class. A set of testing data is also generated in a similar manner. 
 
@@ -41,7 +46,7 @@ problem = EnvModelFunction(input_dim = 15, output_dim = 1024, normalized = True)
 
 # Creating the training data
 n_data = 50
-xlimits = np.array([[0.0, 1.0]]*problem.inputdim)
+xlimits = np.array([[0.0, 1.0]]*problem.input_dim)
 sampler = LHS(xlimits=xlimits, criterion="ese")
 xtrain = sampler(n_data)
 xtrain = torch.tensor(xtrain, **tkwargs)
@@ -58,7 +63,7 @@ The autoencoder architecture is defined using `MLPAutoEnc` which is a simple ful
 
 ```python
 # Generating the nonlinear ROM model
-autoencoder = MLPAutoEnc(high_dim=problem.output_dim, hidden_dims=[256,64], zd = 10, activation = torch.nn.SiLU())
+autoencoder = MLPAutoEnc(high_dim=problem.output_dim, hidden_dims=[256,64], zd = 10, activation = torch.nn.SiLU()).double()
 rom = AUTOENCROM(xtrain, htrain, autoencoder = autoencoder, low_dim_model = KroneckerMultiTaskGP, low_dim_likelihood = ExactMarginalLogLikelihood)
 ```
 
@@ -149,7 +154,15 @@ This will run the EMF case with the standard BO method and ROMBO method using a 
 
 > **_NOTE:_**  Running the airfoil test case requires installing the [blackbox](https://github.com/ComputationalDesignLab/blackbox) package and its dependecies. This is because the computational fluid dynamics solver used in the airfoil case is implemented using that package. 
 
-## Future work
+## Data generated for publication
 
-We welcome collaboration on further development of this framework, both theoretically and from a codebase perspective. 
+The date that was generated for publication of this work using the associated code is given in the ``final_results.zip`` folder. This data is also provided since not all random seeds were set in the process of generating the data and therefore, this data may be used for comparison on the same benchmarking problems, if desired. 
+
+## Cite this work!
+
+If this work is useful for your research please cite the following paper
+
+Abhijnan Dikshit and Leifur Leifsson, A Scalable Composite Bayesian Optimization Framework for Engineering Design Using Deep Learning Reduced-Order Models. Available at SSRN: http://dx.doi.org/10.2139/ssrn.5229686. 
+
+We welcome collaboration on further development of this framework, both theoretically and from a codebase perspective.
 
