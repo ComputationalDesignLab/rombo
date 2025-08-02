@@ -156,7 +156,7 @@ This will run the EMF case with the standard BO method and ROMBO method using a 
 
 ## Data generated for publication
 
-The date that was generated for publication of this work using the associated code is given in the ``final_results.zip`` folder. This data is also provided since not all random seeds were set in the process of generating the data and therefore, this data may be used for comparison on the same benchmarking problems, if desired. 
+The data that was generated for the publication of this work using the associated code is given in the ``final_results.zip`` folder. This data may be used for comparison on the same benchmarking problems with a similar setup, if desired. 
 
 ## Future work
 
