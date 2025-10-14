@@ -1,9 +1,4 @@
 rombo.egg-info/
-rombo/__pycache__
-rombo/dimensionality_reduction/__pycache__
-rombo/interpolation/__pycache__
-rombo/optimization/__pycache__
-rombo/rom/__pycache__
-rombo/test_problems/__pycache__
+**/__pycache__
 build/
 .DS_store
