@@ -166,13 +166,13 @@ Dikshit, A., and Leifsson, L. (2025) A scalable composite Bayesian optimization 
 
 ```
 @article{Dikshit2025,
-title = {A scalable composite Bayesian optimization framework for engineering design using deep learning reduced-order models},
-journal = {Journal of Computational Science},
-volume = {92},
-year = {2025},
-doi = {https://doi.org/10.1016/j.jocs.2025.102722},
-author = {Abhijnan Dikshit and Leifur Leifsson},
-keywords = {Composite Bayesian optimization, Reduced-order modeling, Deep learning, Gaussian processes, Monte Carlo methods},
+    title = {A scalable composite Bayesian optimization framework for engineering design using deep learning reduced-order models},
+    journal = {Journal of Computational Science},
+    volume = {92},
+    year = {2025},
+    doi = {https://doi.org/10.1016/j.jocs.2025.102722},
+    author = {Abhijnan Dikshit and Leifur Leifsson},
+    keywords = {Composite Bayesian optimization, Reduced-order modeling, Deep learning, Gaussian processes, Monte Carlo methods},
 }
 ```
 
