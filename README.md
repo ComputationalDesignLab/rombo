@@ -158,7 +158,23 @@ This will run the EMF case with the standard BO method and ROMBO method using a 
 
 The data that was generated for the publication of this work using the associated code is given in the ``final_results.zip`` folder. This data may be used for comparison on the same benchmarking problems with a similar setup, if desired. 
 
-## Future work
+## Citation
 
-We welcome collaboration on further development of this framework, both theoretically and from a codebase perspective.
+If you find this work useful for your own research, please cite the following paper published in [Journal of Computational Science](https://www.sciencedirect.com/science/article/pii/S1877750325001991).
+
+Dikshit, A., and Leifsson, L. (2025) A scalable composite Bayesian optimization framework for engineering design using deep learning reduced-order models, Journal of Computational Science, Volume 92.
+
+```
+@article{Dikshit2025,
+title = {A scalable composite Bayesian optimization framework for engineering design using deep learning reduced-order models},
+journal = {Journal of Computational Science},
+volume = {92},
+year = {2025},
+doi = {https://doi.org/10.1016/j.jocs.2025.102722},
+author = {Abhijnan Dikshit and Leifur Leifsson},
+keywords = {Composite Bayesian optimization, Reduced-order modeling, Deep learning, Gaussian processes, Monte Carlo methods},
+}
+```
+
+We welcome collaboration on further development of this framework and its application to new and unique optimization problems.
 
