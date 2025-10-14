@@ -73,7 +73,9 @@ class BoTorchModel(MLModel):
     "Method to use fully Bayesian training and No U-Turn sampling"
     # To replicate SAAS settings for the airfoil case shown in the publication, the warmup steps, the number of samples were significantly 
     # lowered to enable a faster runtime on a computing cluster without GPU acceleration. 
-    # To have settings and performance that is similar to the publication, you can set the following: WARMUP_STEPS=128, NUM_SAMPLES=16, THINNING=16
+    # To have settings and performance that are similar to the publication, you can set the following: WARMUP_STEPS=128, NUM_SAMPLES=16, THINNING=16
+    # To compare with the exact performance for the airfoil case, it will be more prudent to use the data given directly in the final_results.zip folder.
+    
     def fit_bayesian(self, gp, WARMUP_STEPS=256, NUM_SAMPLES=128, THINNING=16):
 
         fit_fully_bayesian_model_nuts(gp, warmup_steps=WARMUP_STEPS, num_samples=NUM_SAMPLES, thinning=THINNING, disable_progbar=True)
