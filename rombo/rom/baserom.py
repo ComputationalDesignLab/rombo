@@ -16,7 +16,8 @@ class ROM(ABC):
 
     "Method to perform standardization of data"
     def standardize(self, Y):
-    
+        # The following standardization code was adapted and simplified from
+        # the old BoTorch code version <= 0.12.0, https://archive.botorch.org/versions
         stddim = -1 if Y.dim() < 2 else -2
         self.Y_std = Y.std(dim=stddim, keepdim=True)
         self.Y_mean = Y.mean(dim=stddim, keepdim=True)
