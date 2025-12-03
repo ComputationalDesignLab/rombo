@@ -156,7 +156,7 @@ This will run the EMF case with the standard BO method and ROMBO method using a 
 
 ## Data generated for publication
 
-The data that was generated for the publication of this work using the associated code is given in the ``final_results.zip`` folder. This data may be used for comparison on the same benchmarking problems with a similar setup, if desired. 
+The data that was generated for the publication of this work using the associated code is given in the ``final_results.zip`` folder. This data may be used for comparison on the same benchmarking problems with a similar setup, if desired. The `cst.py` file used for calculating airfoil coordinates and to plot the results of the inverse airfoil design problem was obtained from the [blackbox](https://github.com/ComputationalDesignLab/blackbox) package. See the repository of the package for more details.    
 
 ## Citation
 
